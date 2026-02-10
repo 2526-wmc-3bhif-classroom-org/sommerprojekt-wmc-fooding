@@ -6,4 +6,4 @@ Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
 :sectnums:
 
 
-link:projectProposal.adoc[Projekt Antrag]ProjektSommer
+link:projectProposal.html[Projekt Antrag]
