@@ -1,0 +1,9 @@
+= Projekt
+Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
+1.0.0, {docdate}
+
+:toc: left
+:sectnums:
+
+
+link:projectProposal.adoc[Projekt Antrag]ProjektSommer

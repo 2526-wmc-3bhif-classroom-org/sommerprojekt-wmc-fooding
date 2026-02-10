@@ -1,0 +1,54 @@
+= Project Proposal
+Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
+1.0.0, {docdate}
+
+
+:sectnums:
+:experimental:
+
+
+== Aufgabenbeschreibung
+Im Rahmen dieses Projekts wird eine Web Anwendung entwickelt, die Benutzer:innen beim Planen, Einkaufen und Verwerten von Lebensmitteln unterstützt.
+
+Der Fokus liegt auf der Verwaltung von Lebensmitteln mit Ablaufdatum sowie der automatischen Rezeptvorschlag-Funktion, um vorhandene Zutaten rechtzeitig zu verbrauchen.
+Zusätzlich soll die Plattform langfristig als Community für Rezeptaustausch dienen.
+
+Zentrale Funktionen:
+
+- Verwaltung von eingekauften Lebensmitteln inkl. Ablaufdatum
+
+- Warnsystem bei bevorstehendem Ablauf
+
+- Rezeptvorschläge basierend auf bald ablaufenden Zutaten
+
+- Einkaufslisten-Funktion
+
+- Möglichkeit, Rezepte hochzuladen und zu teilen
+
+- Grundlegende Anzeige von Nährwertinformationen
+
+== Nutzen
+
+=== Nutzen für Anwender:innen
+
+- Reduktion von Lebensmittelverschwendung
+
+- Zeitersparnis beim Kochen und Planen
+
+- Bessere Übersicht über vorhandene Lebensmittel
+
+- Inspiration durch passende Rezepte
+
+- Bewussterer Umgang mit Ernährung und Konsum
+
+=== Gesellschaftlicher Nutzen
+
+- Beitrag zur Nachhaltigkeit
+
+- Förderung eines verantwortungsvollen Konsumverhaltens
+
+- Sensibilisierung für Lebensmittelwert und Haltbarkeit
+
+== Konsequenzen bei Nichtdurchführung
+
+== Ressourcen
