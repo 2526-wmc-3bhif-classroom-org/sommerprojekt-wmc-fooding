@@ -6,7 +6,7 @@ on:
     branches:
       - 'main'
     paths:
-      - documentation/asciidocs/**
+      - 'documentation/asciidocs/**'
   workflow_dispatch:
 permissions:
   contents: write
@@ -15,7 +15,7 @@ jobs:
     name: Build & Publish 🚀
     runs-on: ubuntu-latest
     env:
-      INPUTPATH: asciidocs
+      INPUTPATH: documentation/asciidocs
       SLIDES: true
       BRANCH: gh-pages
     steps:

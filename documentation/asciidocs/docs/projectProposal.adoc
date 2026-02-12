@@ -54,7 +54,10 @@ Lebensmittel laufen ab, werden vergessen und weggeworfen.
 Dadurch entsteht unnötige Verschwendung von Geld und Ressourcen.
 
 
-== Ressourcen
+== Finanzielle und personelle Rahmenbedingungen
+
+- 4 Personen
+- evtl. API Kauf
 
 
 
