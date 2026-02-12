@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="2576c09c-0c89-4b65-b9f7-317ad65bec51" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/asciidocs/docs/projectProposal.adoc" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="Documentation" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="397UqErCljwoKXKdmcDpZs2edBB" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lorenz-parzer/Documents/School/WMC/ProjektSommer&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
+    ]
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/asciidocs/docs" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-WS-253.30387.83" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2576c09c-0c89-4b65-b9f7-317ad65bec51" name="Changes" comment="" />
+      <created>1770046791688</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1770046791688</updated>
+      <workItem from="1770046792822" duration="4709000" />
+      <workItem from="1770655504667" duration="8454000" />
+    </task>
+    <task id="LOCAL-00001" summary="docs: added some ideas for the projectProposal">
+      <option name="closed" value="true" />
+      <created>1770708833875</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1770708833875</updated>
+    </task>
+    <task id="LOCAL-00002" summary="deleted all to have a clear structure">
+      <option name="closed" value="true" />
+      <created>1770709060822</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1770709060822</updated>
+    </task>
+    <task id="LOCAL-00003" summary="deleted all to have a clear structure">
+      <option name="closed" value="true" />
+      <created>1770709124556</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1770709124556</updated>
+    </task>
+    <task id="LOCAL-00004" summary="inserted adoc html template for documentation.">
+      <option name="closed" value="true" />
+      <created>1770709676562</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1770709676562</updated>
+    </task>
+    <task id="LOCAL-00005" summary="changed branch">
+      <option name="closed" value="true" />
+      <created>1770710235073</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1770710235073</updated>
+    </task>
+    <task id="LOCAL-00006" summary="added docs.yaml to main because otherwise the workflow wouldn´t work">
+      <option name="closed" value="true" />
+      <created>1770711174074</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1770711174074</updated>
+    </task>
+    <task id="LOCAL-00007" summary="deleted the whole branch bc it didnt work at all">
+      <option name="closed" value="true" />
+      <created>1770711982006</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1770711982006</updated>
+    </task>
+    <task id="LOCAL-00008" summary="changed the structure">
+      <option name="closed" value="true" />
+      <created>1770712293376</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1770712293376</updated>
+    </task>
+    <task id="LOCAL-00009" summary="changed link from adoc to html">
+      <option name="closed" value="true" />
+      <created>1770712799336</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1770712799336</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="docs: added some ideas for the projectProposal" />
+    <MESSAGE value="deleted all to have a clear structure" />
+    <MESSAGE value="inserted adoc html template for documentation." />
+    <MESSAGE value="changed branch" />
+    <MESSAGE value="added docs.yaml to main because otherwise the workflow wouldn´t work" />
+    <MESSAGE value="deleted the whole branch bc it didnt work at all" />
+    <MESSAGE value="changed the structure" />
+    <MESSAGE value="changed link from adoc to html" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed link from adoc to html" />
+  </component>
+</project>

@@ -1,0 +1,54 @@
+= Project Proposal
+Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
+1.0.0, {docdate}
+
+
+:sectnums:
+:experimental:
+
+
+== Aufgabenbeschreibung
+In diesem Projekt wird eine Web Anwendung entwickelt, welche sich auf die Verwaltung von eingetragenen Lebensmittel fokussiert.
+Dem Nutzer sollte es möglich sein auf seine Lebensmittel einen genauen Blick zu werfen und er soll rechtzeitig darauf aufmerksam gemacht werden, wenn Produkte ablaufen.
+Zudem werden basierend auf den besitzenden Lebensmittel ein Rezept erstellt werden, desweiteren kann der Nutzer auch ein Rezept eingeben und bekommt dafür ein Produktliste zum Einkaufen
+
+=== Funktionen
+- Eintragen von Lebensmitteln mit Ablaufdatum
+
+- Übersicht aller gespeicherten Lebensmittel
+
+- Anzeige, welche Lebensmittel bald ablaufen
+
+- Einfache Warnung bei bald ablaufenden Produkten
+
+- Rezeptvorschläge basierend auf den vorhandenen Lebensmitteln
+
+- Einkaufsliste basierend auf Rezepteingabe
+
+== Nutzen
+
+=== Nutzen für Anwender:innen
+
+- Weniger Lebensmittel werden weggeworfen
+
+- Bessere Übersicht über den eigenen Vorrat
+
+- Man weiß schneller, was man kochen kann
+
+- Geldersparnis durch weniger Verschwendung
+
+
+=== Gesellschaftlicher Nutzen
+
+- Weniger Lebensmittelverschwendung
+
+- Bewussterer Umgang mit Lebensmitteln
+
+- Beitrag zu nachhaltigem Konsum
+
+== Konsequenzen bei Nichtdurchführung
+
+== Ressourcen
+
+
+
