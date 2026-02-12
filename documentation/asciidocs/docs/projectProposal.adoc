@@ -48,6 +48,12 @@ Zudem werden basierend auf den besitzenden Lebensmittel ein Rezept erstellt werd
 
 == Konsequenzen bei Nichtdurchführung
 
+Ohne diese Anwendung bleibt das Problem bestehen, dass viele Menschen den Überblick über ihre Lebensmittel verlieren.
+
+Lebensmittel laufen ab, werden vergessen und weggeworfen.
+Dadurch entsteht unnötige Verschwendung von Geld und Ressourcen.
+
+
 == Ressourcen
 
 
