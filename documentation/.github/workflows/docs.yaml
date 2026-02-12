@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       INPUTPATH: documentation/asciidocs
-      OUTPUTPATH: dist
       SLIDES: true
       BRANCH: gh-pages
     steps:
@@ -32,10 +31,6 @@ jobs:
 
       - name: run docker
         run: |
-          chmod +x ${{ env.INPUTPATH }}/scripts/docker-convert.sh
-          
-          # Docker ausführen. Das Skript nutzt INPUTPATH als Quelle 
-          # und erstellt (laut deinem Log) den Ordner 'dist' im aktuellen Verzeichnis.
           sudo ${{ env.INPUTPATH }}/scripts/docker-convert.sh ${{ env.INPUTPATH }} ${{ env.SLIDES }}
           tree
 
@@ -46,4 +41,4 @@ jobs:
           # GITHUB_TOKEN: ${{ github.TOKEN }}
           #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH }}
-          folder: ${{ env.OUTPUTPATH }}
+          folder: ${{ env.INPUTPATH }}
