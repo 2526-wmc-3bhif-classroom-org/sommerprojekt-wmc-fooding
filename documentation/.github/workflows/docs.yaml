@@ -31,6 +31,7 @@ jobs:
 
       - name: run docker
         run: |
+          chmod +x ${{ env.INPUTPATH }}/scripts/docker-convert.sh
           sudo ${{ env.INPUTPATH }}/scripts/docker-convert.sh ${{ env.INPUTPATH }} ${{ env.SLIDES }}
           tree
 
@@ -41,4 +42,4 @@ jobs:
           # GITHUB_TOKEN: ${{ github.TOKEN }}
           #GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH }}
-          folder: ${{ env.INPUTPATH }}
+          folder: dist
