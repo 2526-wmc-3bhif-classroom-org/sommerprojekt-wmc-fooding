@@ -1,9 +1,81 @@
 = Database structure
 Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
 1.0.0, {docdate}
+:sectnums:
 
 == ERD
 
 image:fooding_erd.png[]
 
+== Beschreibung ERD
 
+=== User
+Repräsentiert eine Person, die die Anwendung nutzt.
+
+Ein User kann:
+- eigene Lebensmittel speichern
+- eigene Rezepte erstellen
+- eine Einkaufsliste verwalten
+
+Wichtige Daten:
+- E-Mail (Login)
+- Passwort (verschlüsselt gespeichert)
+
+---
+
+=== Product
+Beschreibt ein allgemeines Produkt wie „Milch“, „Reis“ oder „Tomaten“.
+
+Ein Product ist nur die Vorlage – ohne Ablaufdatum oder Menge.
+Es wird sowohl im Vorrat als auch in Rezepten verwendet.
+
+Beispiel:
+- Name: Milch
+- Standard-Einheit: Liter
+
+---
+
+=== InventoryItem
+Repräsentiert ein konkretes Produkt im Besitz eines Users.
+
+Hier wird gespeichert:
+- welches Produkt
+- wie viel davon
+- bis wann es haltbar ist
+
+Das ist der tatsächliche Inhalt des Kühlschranks oder Vorratsschranks.
+
+---
+
+=== Recipe
+Ein vom User gespeichertes oder erstelltes Rezept.
+
+Enthält:
+- Titel
+- Zubereitungsanleitung
+- mehrere Zutaten (über RecipeIngredient)
+
+Ein Rezept gehört immer zu einem User.
+
+---
+
+=== RecipeIngredient
+Verbindet ein Rezept mit den benötigten Produkten.
+
+Hier steht:
+- welches Produkt
+- in welcher Menge
+
+Diese Entity ermöglicht es, ein Rezept mit mehreren Zutaten sauber abzubilden.
+
+---
+
+=== ShoppingListItem
+Ein einzelner Eintrag auf der Einkaufsliste.
+
+Speichert:
+- welches Produkt gekauft werden soll
+- wie viel
+- ob es bereits abgehakt wurde
+
+Optional kann es einem Rezept zugeordnet sein.
