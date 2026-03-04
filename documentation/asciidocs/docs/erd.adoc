@@ -1,0 +1,9 @@
+= Database structure
+Lorenz Parzer, Leon Marazovic, Marko Trkulja, Mario Solomun
+1.0.0, {docdate}
+
+== ERD
+
+image:fooding_erd.png[]
+
+
