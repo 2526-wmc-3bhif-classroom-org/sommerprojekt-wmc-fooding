@@ -1,13 +1,16 @@
-import BetterSqlite3 from "better-sqlite3";
-import type { Database } from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+// NO AI used here, but copied code from the CRUD Flightmanagement exercise and adjusted it
+
+
+import BetterSqlite3 = require("better-sqlite3");
+import type { Database as DatabaseType } from "better-sqlite3";
+import * as path from "path";
+import * as fs from "fs";
 
 const dataDir = path.join(process.cwd(), "data");
-const dbFileName = path.join(dataDir, "app.db");
+const dbFileName = path.join(dataDir, "food.db");
 
 export class DB {
-    public static createDBConnection(): Database {
+    public static createDBConnection(): DatabaseType {
         fs.mkdirSync(dataDir, { recursive: true });
 
         const db = new BetterSqlite3(dbFileName, {
@@ -21,15 +24,15 @@ export class DB {
         return db;
     }
 
-    public static beginTransaction(connection: Database): void {
+    public static beginTransaction(connection: DatabaseType): void {
         connection.exec("BEGIN TRANSACTION;");
     }
 
-    public static commitTransaction(connection: Database): void {
+    public static commitTransaction(connection: DatabaseType): void {
         connection.exec("COMMIT;");
     }
 
-    public static rollbackTransaction(connection: Database): void {
+    public static rollbackTransaction(connection: DatabaseType): void {
         connection.exec("ROLLBACK;");
     }
 
@@ -46,11 +49,11 @@ export class DB {
         console.log(`SQL: ${statement}`);
     }
 
-    private static ensureTablesCreated(connection: Database): void {
+    private static ensureTablesCreated(connection: DatabaseType): void {
         connection.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL UNIQUE,
+                email TEXT NOT NULL UNIQUE,                                 
                 password_hash TEXT NOT NULL
             );
 
@@ -61,11 +64,11 @@ export class DB {
             );
 
             CREATE TABLE IF NOT EXISTS recipes (
-                recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                instructions TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                   recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   user_id INTEGER NOT NULL,
+                   title TEXT NOT NULL,
+                    instructions TEXT NOT NULL,
+                   FOREIGN KEY (user_id) REFERENCES users(user_id)
             );
 
             CREATE TABLE IF NOT EXISTS recipe_ingredients (

@@ -1,3 +1,6 @@
+// NO AI used here, but copied code from the CRUD Flightmanagement exercise and adjusted it
+
+
 import BetterSqlite3 from "better-sqlite3";
 import type { Database } from "better-sqlite3";
 import { DB } from "./database";
