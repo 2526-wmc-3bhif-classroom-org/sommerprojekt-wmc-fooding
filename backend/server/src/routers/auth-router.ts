@@ -1,10 +1,12 @@
-import express from "express";
-import jwt from "jsonwebtoken";
+import * as express from "express";
+import * as jwt from "jsonwebtoken";
 import { StatusCodes } from "http-status-codes";
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { UserRepository } from "../models/user/user-repository";
 import 'dotenv/config';
 
+
+//no ai use here just almost the same like in the fruit backend the teacher gave us
 export const authRouter = express.Router();
 const SECRET_KEY = process.env.JWT_SECRET || 'fallback-key';
 
