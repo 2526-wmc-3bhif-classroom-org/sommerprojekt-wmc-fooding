@@ -7,7 +7,7 @@ const SECRET_KEY = process.env.JWT_SECRET || 'fallback-key';
 export interface AuthRequest extends Request {
     payload?: JwtPayload;
 }
-
+// Verifies the user's identity
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
