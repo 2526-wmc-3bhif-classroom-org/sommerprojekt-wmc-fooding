@@ -61,3 +61,33 @@
     linear-gradient(160deg, #f7f1e9 0%, #fffaf5 48%, #f2ebe2 100%);
 }
 
+/* Mithilfe von KI */
+.ambient {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(34px);
+  background: var(--ambient);
+  pointer-events: none;
+}
+
+.ambient-1 {
+  width: 240px;
+  height: 240px;
+  top: 80px;
+  left: -60px;
+}
+
+.ambient-2 {
+  width: 300px;
+  height: 300px;
+  right: -90px;
+  top: 160px;
+}
+
+.ambient-3 {
+  width: 220px;
+  height: 220px;
+  bottom: 80px;
+  left: 35%;
+}
+
