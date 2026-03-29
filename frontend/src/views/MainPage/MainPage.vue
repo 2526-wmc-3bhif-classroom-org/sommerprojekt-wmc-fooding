@@ -71,6 +71,20 @@
     </section>
   </main>
 
+  <footer class="bottom-nav">
+    <button
+      v-for="button in buttons"
+      :key="button"
+      type="button"
+      class="action-card"
+      @click="handlePlaceholder(button)"
+    >
+      <span class="action-glow"></span>
+      <span class="action-label">{{ button }}</span>
+      <span class="action-arrow">↗</span>
+    </button>
+  </footer>
+
 </template>
 
 
