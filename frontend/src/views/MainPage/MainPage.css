@@ -13,3 +13,29 @@
 :global(body) {
   background: #08111a;
 }
+
+/* Mithilfe von KI */
+.page {
+  --bg-secondary: rgba(18, 26, 36, 0.62);
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --text-main: #f8fbff;
+  --text-muted: rgba(235, 241, 250, 0.76);
+  --link: rgba(244, 248, 255, 0.88);
+  --blue: #4da3ff;
+  --blue-strong: #1d78ff;
+  --accent-warm: #ffd9b0;
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+  --button-bg: rgba(20, 30, 42, 0.7);
+  --button-border: rgba(140, 198, 255, 0.18);
+  --ambient: rgba(112, 189, 255, 0.12);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  padding: 28px;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at top left, rgba(77, 163, 255, 0.12), transparent 24%),
+    radial-gradient(circle at 82% 16%, rgba(255, 217, 176, 0.1), transparent 18%),
+    radial-gradient(circle at 50% 100%, rgba(255, 186, 120, 0.08), transparent 25%),
+    linear-gradient(160deg, #08111a 0%, #0d1821 46%, #131d22 100%);
+}
