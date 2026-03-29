@@ -91,7 +91,8 @@ export default defineComponent({
       intervalId,
       buttons,
       slides,
-      currentSlide
+      currentSlide,
+      handlePlaceholder
     };
   },
 
@@ -133,3 +134,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   stopSlider()
 });
+
+const handlePlaceholder = (button: string) => {
+  console.log(`${button} clicked`)
+};
