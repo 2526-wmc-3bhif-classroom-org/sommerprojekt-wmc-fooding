@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref } from 'vue'
+import { computed, defineComponent, ref, onMounted, onBeforeUnmount } from 'vue'
 
 type ThemeMode = 'dark' | 'light';
 type SlideItem = {
@@ -7,6 +7,34 @@ type SlideItem = {
   text: string
   image: string
 };
+const activeIndex = ref(0);
+let intervalId: number | null = null;
+
+// Mithilfe von KI
+const slides = ref<SlideItem[]>([
+  {
+    id: 1,
+    title: 'Title',
+    text: 'Text',
+    image:
+      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1400&q=80'
+  },
+  {
+    id: 2,
+    title: 'Title',
+    text: 'Text',
+    image:
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80'
+  },
+  {
+    id: 3,
+    title: 'Title',
+    text: 'Text',
+    image:
+      'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1400&q=80'
+  }
+]);
+
 export default defineComponent({
   name: 'MainPage',
   setup() {
@@ -80,3 +108,28 @@ const toggleTheme = () => {
 const updateDocumentTheme = () => {
   document.documentElement.setAttribute('data-theme', theme.value)
 };
+
+const nextSlide = () => {
+  activeIndex.value = (activeIndex.value + 1) % slides.value.length
+};
+
+const stopSlider = () => {
+  if (intervalId !== null) {
+    window.clearInterval(intervalId)
+    intervalId = null
+  }
+};
+
+const startSlider = () => {
+  stopSlider()
+  intervalId = window.setInterval(nextSlide, 4500)
+};
+
+onMounted(() => {
+  updateDocumentTheme()
+  startSlider()
+});
+
+onBeforeUnmount(() => {
+  stopSlider()
+});
