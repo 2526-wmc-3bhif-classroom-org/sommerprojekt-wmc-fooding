@@ -290,11 +290,10 @@ export default defineComponent({
           })
         }
 
-        // Small delay to ensure data is saved
-        await nextTick()
+        // Reload page to refresh auth state
         setTimeout(() => {
-          closeAuthModal()
-        }, 50)
+          window.location.reload()
+        }, 300)
       } catch (error) {
         if (error instanceof Error) {
           errorMessage.value = error.message
