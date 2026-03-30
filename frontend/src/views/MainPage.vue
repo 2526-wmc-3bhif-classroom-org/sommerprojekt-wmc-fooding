@@ -1,3 +1,196 @@
+<template>
+  <div class="page" :class="theme">
+    <div class="ambient ambient-1"></div>
+    <div class="ambient ambient-2"></div>
+    <div class="ambient ambient-3"></div>
+
+    <header class="topbar glass">
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#" class="nav-link">Link One</a>
+        <a href="#" class="nav-link">Link Two</a>
+        <a href="#" class="nav-link">Link Three</a>
+        <a href="#" class="nav-link">Link Four</a>
+      </nav>
+
+      <button
+        class="theme-toggle"
+        type="button"
+        :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        @click="toggleTheme"
+      >
+        <span class="toggle-track">
+          <span class="toggle-thumb">
+            <span v-if="theme === 'dark'">☾</span>
+            <span v-else>☀</span>
+          </span>
+        </span>
+      </button>
+    </header>
+
+    <main class="hero-layout">
+      <section class="intro-panel glass">
+        <div class="intro-content">
+          <p class="eyebrow">Smart • Modern • Delicious</p>
+          <h1 class="headline">FOODING</h1>
+          <p class="sub-accent">EAT LIKE NEVER BEFORE!</p>
+          <p class="description"></p>
+
+          <!-- Mithilfe von KI -->
+          <div class="intro-image-wrap">
+            <img
+              class="intro-image"
+              src="https://images.unsplash.com/photo-1546069901-eacef0df6022?auto=format&fit=crop&w=1200&q=80"
+              alt="Food preview"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="visual-panel glass">
+        <div class="slider-frame">
+          <transition name="fade" mode="out-in">
+            <div
+              :key="currentSlide.id"
+              class="slide"
+              :style="{
+                backgroundImage: `linear-gradient(135deg, rgba(14, 11, 8, 0.24), rgba(77, 163, 255, 0.12)), url(${currentSlide.image})`
+              }"
+            >
+              <div class="slide-overlay">
+                <p class="slide-kicker">Text</p>
+                <h2 class="slide-title">{{ currentSlide.title }}</h2>
+                <p class="slide-text">{{ currentSlide.text }}</p>
+              </div>
+            </div>
+          </transition>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bottom-nav">
+      <button
+        v-for="button in buttons"
+        :key="button"
+        type="button"
+        class="action-card"
+        @click="handlePlaceholder(button)"
+      >
+        <span class="action-glow"></span>
+        <span class="action-label">{{ button }}</span>
+        <span class="action-arrow">↗</span>
+      </button>
+    </footer>
+  </div>
+</template>
+
+<script lang="ts">
+import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+
+type ThemeMode = 'dark' | 'light';
+
+type SlideItem = {
+  id: number
+  title: string
+  text: string
+  image: string
+};
+
+export default defineComponent({
+  name: 'MainPage',
+  setup() {
+    const theme = ref<ThemeMode>('light');
+    const activeIndex = ref(0);
+    let intervalId: number | null = null;
+
+    const buttons = ['btn1', 'btn2', 'btn3', 'btn4', 'btn5'];
+
+    // Mithilfe von KI
+    const slides = ref<SlideItem[]>([
+      {
+        id: 1,
+        title: 'Title',
+        text: 'Text',
+        image:
+          'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1400&q=80'
+      },
+      {
+        id: 2,
+        title: 'Title',
+        text: 'Text',
+        image:
+          'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1400&q=80'
+      },
+      {
+        id: 3,
+        title: 'Title',
+        text: 'Text',
+        image:
+          'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=1400&q=80'
+      }
+    ]);
+
+    const fallbackSlide: SlideItem = {
+      id: 0,
+      title: 'Title',
+      text: 'Text',
+      image:
+        'https://images.unsplash.com/photo-1546069901-eacef0df6022?auto=format&fit=crop&w=1200&q=80'
+    };
+
+    const currentSlide = computed<SlideItem>(() => {
+      return slides.value[activeIndex.value] ?? fallbackSlide
+    });
+
+    const updateDocumentTheme = () => {
+      document.documentElement.setAttribute('data-theme', theme.value)
+    };
+
+    const toggleTheme = () => {
+      theme.value = theme.value === 'dark' ? 'light' : 'dark'
+      updateDocumentTheme()
+    };
+
+    const nextSlide = () => {
+      activeIndex.value = (activeIndex.value + 1) % slides.value.length
+    };
+
+    const stopSlider = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
+    };
+
+    const startSlider = () => {
+      stopSlider()
+      intervalId = window.setInterval(nextSlide, 4500)
+    };
+
+    const handlePlaceholder = (button: string) => {
+      console.log(`${button} clicked`)
+    };
+
+    onMounted(() => {
+      updateDocumentTheme()
+      startSlider()
+    });
+
+    onBeforeUnmount(() => {
+      stopSlider()
+    });
+
+    return {
+      theme,
+      buttons,
+      currentSlide,
+      toggleTheme,
+      handlePlaceholder
+    }
+  }
+});
+</script>
+
+<style scoped>
 :global(*) {
   box-sizing: border-box;
 }
@@ -553,3 +746,4 @@
     grid-template-columns: 1fr;
   }
 }
+</style>
