@@ -1,4 +1,4 @@
-<template>
+  <template>
   <div class="page" :class="theme">
     <div class="ambient ambient-1"></div>
     <div class="ambient ambient-2"></div>
