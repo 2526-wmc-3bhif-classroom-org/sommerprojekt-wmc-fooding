@@ -51,7 +51,19 @@ authRouter.post("/register", (req, res) => {
     }
 
     const password_hash = bcrypt.hashSync(password, 10);
-    UserRepository.create({ email, password_hash });
+    const userId = UserRepository.create({ email, password_hash });
 
-    res.status(StatusCodes.CREATED).json({ message: "Registrierung erfolgreich" });
+    const userClaims = {
+        email: email,
+        id: userId,
+        role: 'user'
+    };
+
+    const token = jwt.sign({ user: userClaims }, SECRET_KEY, { expiresIn: '1h' });
+
+    res.status(StatusCodes.CREATED).json({
+        user: userClaims,
+        accessToken: token,
+        message: "Registrierung erfolgreich"
+    });
 });

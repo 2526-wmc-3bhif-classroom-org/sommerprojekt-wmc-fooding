@@ -184,9 +184,16 @@ export default defineComponent({
     const authPassword = ref('')
     const errorMessage = ref('')
     const isAuthLoading = ref(false)
+    const authRefresh = ref(0)
 
-    const isAuthenticated = computed(() => authService.isAuthenticated())
-    const user = computed(() => authService.getUser())
+    const isAuthenticated = computed(() => {
+      authRefresh.value // Depend on refresh trigger
+      return authService.isAuthenticated()
+    })
+    const user = computed(() => {
+      authRefresh.value // Depend on refresh trigger
+      return authService.getUser()
+    })
 
     const buttons = ['btn1', 'btn2', 'btn3', 'btn4', 'btn5']
 
@@ -267,10 +274,6 @@ export default defineComponent({
       authPassword.value = ''
       errorMessage.value = ''
       isLoginMode.value = true
-      // Ensure UI updates with fresh auth state
-      nextTick(() => {
-        // Force recomputation of auth state
-      })
     }
 
     const handleAuthSubmit = async () => {
@@ -289,11 +292,11 @@ export default defineComponent({
             password: authPassword.value
           })
         }
-
-        // Reload page to refresh auth state
+        
+        // BEIDE: Seite reloaden für sauberen State
         setTimeout(() => {
           window.location.reload()
-        }, 300)
+        }, 200)
       } catch (error) {
         if (error instanceof Error) {
           errorMessage.value = error.message
@@ -307,6 +310,8 @@ export default defineComponent({
 
     const handleLogout = () => {
       authService.logout()
+      // Trigger computed properties to update
+      authRefresh.value++
       // Small delay to ensure data is cleared
       setTimeout(() => {
         window.location.reload()
