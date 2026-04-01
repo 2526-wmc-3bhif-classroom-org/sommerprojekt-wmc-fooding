@@ -1,3 +1,4 @@
+// ai used here in styling
 <template>
   <div class="auth-form">
     <div v-if="errorMessage" class="error-message">
@@ -45,12 +46,14 @@
 import { ref } from 'vue'
 import { authService } from '@/services/auth'
 
-// ai
+
+
 const props = defineProps<{
   initialMode?: boolean
 }>()
 
-// ai
+
+
 const emit = defineEmits<{
   (e: 'success'): void
 }>()
@@ -106,7 +109,8 @@ const handleSubmit = async () => {
   font-size: 0.9rem;
   border-left: 4px solid #c33;
 }
-//  major help from ai in styles
+
+
 .form-group {
   margin-bottom: 20px;
 }

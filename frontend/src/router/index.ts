@@ -25,22 +25,17 @@ const router = createRouter({
   ],
 })
 
-/**
- * Route Guard - Prüft ob Benutzer authentifiziert ist
- */
+
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = authService.isAuthenticated()
+  const isAuthenticated = authService.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
 
-  // Wenn Route Auth benötigt aber Benutzer nicht angemeldet
   if (requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
   }
-  // Wenn Benutzer angemeldet und auf Login-Seite zugreifen will
   else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'home' })
   }
-  // Sonst weitergehen
   else {
     next()
   }
