@@ -1,3 +1,5 @@
+import { ref, type Ref } from 'vue'
+
 export interface LoginRequest {
   email: string
   password: string
@@ -24,25 +26,33 @@ export interface User {
   role: string
 }
 
-const API_URL = 'http://localhost:3000'
+const API_URL = 'http://127.0.0.1:8080'
 
 class AuthService {
-  private token: string | null = null
+  private _token: Ref<string | null> = ref(null)
+  private _user: Ref<User | null> = ref(null)
 
   constructor() {
-    // Token aus localStorage laden falls vorhanden
-    this.token = localStorage.getItem('accessToken')
+    this._token.value = localStorage.getItem('accessToken')
+    const userData = localStorage.getItem('user')
+    if (userData && userData !== 'undefined' && userData !== 'null') {
+      try {
+        this._user.value = JSON.parse(userData)
+      } catch (e) {
+        console.error('Error parsing user data:', e)
+      }
+    }
   }
 
-  /**
-   * Login mit E-Mail und Passwort
-   */
+
+  get user() { return this._user.value }
+  get isAuthenticated() { return !!this._token.value }
+
+
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
     })
 
@@ -52,20 +62,15 @@ class AuthService {
     }
 
     const data: LoginResponse = await response.json()
-    this.setToken(data.accessToken)
-    this.setUser(data.user)
+    this.setSession(data.accessToken, data.user)
     return data
   }
 
-  /**
-   * Registrierung neuer Benutzer
-   */
+
   async register(credentials: RegisterRequest): Promise<LoginResponse> {
     const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
     })
 
@@ -75,63 +80,26 @@ class AuthService {
     }
 
     const data: LoginResponse = await response.json()
-    this.setToken(data.accessToken)
-    this.setUser(data.user)
+    this.setSession(data.accessToken, data.user)
     return data
   }
 
-  /**
-   * Logout & Token löschen
-   */
   logout(): void {
-    this.token = null
+    this._token.value = null
+    this._user.value = null
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
   }
 
-  /**
-   * Token speichern
-   */
-  private setToken(token: string): void {
-    this.token = token
+  private setSession(token: string, user: User): void {
+    this._token.value = token
+    this._user.value = user
     localStorage.setItem('accessToken', token)
-  }
-
-  /**
-   * Benutzerdaten speichern
-   */
-  private setUser(user: User): void {
     localStorage.setItem('user', JSON.stringify(user))
   }
 
-  /**
-   * Token abrufen
-   */
   getToken(): string | null {
-    return this.token
-  }
-
-  /**
-   * Benutzer abrufen
-   */
-  getUser(): User | null {
-    const userData = localStorage.getItem('user')
-    if (!userData || userData === 'undefined' || userData === 'null') {
-      return null
-    }
-    try {
-      return JSON.parse(userData)
-    } catch (error) {
-      console.error('Error parsing user data:', error)
-      return null
-    }
-  }
-
-  /**
-   * Prüft ob Benutzer eingeloggt ist
-   */
-  isAuthenticated(): boolean {
-    return !!this.token && !!this.getUser()
+    return this._token.value
   }
 }
 
