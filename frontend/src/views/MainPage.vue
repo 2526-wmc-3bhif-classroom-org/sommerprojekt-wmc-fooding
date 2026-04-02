@@ -7,6 +7,7 @@
     <header class="topbar glass">
       <nav class="nav-links" aria-label="Main navigation">
         <router-link to="/inventory" class="nav-link">Inventar</router-link>
+        <router-link to="/products" class="nav-link">Produkte</router-link>
       </nav>
 
       <div class="header-actions">
