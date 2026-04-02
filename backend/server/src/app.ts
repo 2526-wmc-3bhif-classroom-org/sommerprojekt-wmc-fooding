@@ -1,6 +1,7 @@
 import * as express from "express";
 import { DB } from "./db/database";
 import { authRouter } from "./routers/auth-router";
+import { productRouter } from "./models/product/product-routes";
 import * as cors from 'cors';
 import 'dotenv/config';
 
@@ -21,6 +22,7 @@ app.use(express.json());
 
 
 app.use('/auth', authRouter);
+app.use('/products', productRouter);
 
 
 app.get('/health', (req, res) => {
