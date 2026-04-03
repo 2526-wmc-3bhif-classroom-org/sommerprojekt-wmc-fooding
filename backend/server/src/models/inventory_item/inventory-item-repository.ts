@@ -2,12 +2,9 @@ import { DB } from "../../db/database";
 import type { Database as DatabaseType } from "better-sqlite3";
 
 export class InventoryItemRepository {
-    private db: DatabaseType;
-
-    constructor() {
-        this.db = DB.createDBConnection();
+    private get db() {
+        return DB.getConnection();
     }
-
 
     public getTotalAmount(userId: number, productId: number): number {
         const result = this.db.prepare(`
