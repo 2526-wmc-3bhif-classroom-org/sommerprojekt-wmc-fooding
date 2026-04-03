@@ -68,7 +68,8 @@ export class DB {
             CREATE TABLE IF NOT EXISTS products (
                 product_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                default_unit TEXT NOT NULL
+                default_unit TEXT NOT NULL,
+                category TEXT
             );
 
             CREATE TABLE IF NOT EXISTS recipes (
@@ -94,6 +95,7 @@ export class DB {
                 product_id INTEGER NOT NULL,
                 quantity REAL NOT NULL,
                 expiration_date TEXT NOT NULL,
+                location TEXT,
                 FOREIGN KEY (user_id) REFERENCES users(user_id),
                 FOREIGN KEY (product_id) REFERENCES products(product_id)
             );
