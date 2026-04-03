@@ -312,3 +312,224 @@ onBeforeUnmount(() => {
   // Cleanup if needed
 })
 </script>
+
+<style scoped>
+@import '@/assets/page-layout.css';
+
+/* Form */
+.product-form {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.form-group input {
+  padding: 12px 16px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--blue), var(--blue-strong));
+  color: white;
+  flex: 1;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--text-main);
+}
+
+/* Messages */
+.message {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  background: rgba(46, 213, 115, 0.15);
+  color: #2ed573;
+}
+
+.error-message {
+  background: rgba(255, 76, 76, 0.15);
+  color: #ff4c4c;
+}
+
+/* Products Container */
+.products-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.6rem;
+  color: var(--text-main);
+}
+
+.product-count {
+  background: var(--blue);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+}
+
+/* States */
+.loading-state, .empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+/* Products List */
+.products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+/* Product Card */
+.product-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.view-mode, .edit-mode {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-mode {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-name {
+  margin: 0 0 6px 0;
+  font-size: 1rem;
+  color: var(--text-main);
+}
+
+.product-unit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Actions */
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-edit, .btn-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--button-border);
+  background: var(--button-bg);
+  cursor: pointer;
+}
+
+.btn-edit::before {
+  content: '✎';
+  color: var(--blue);
+}
+
+.btn-delete::before {
+  content: '🗑';
+}
+
+/* Mithilfe von Ki */
+.edit-input {
+  padding: 10px;
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  color: var(--text-main);
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.btn-save, .btn-cancel {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.btn-save {
+  background: linear-gradient(135deg, var(--blue), var(--blue-strong));
+  color: white;
+}
+.btn-cancel {
+  background: var(--button-bg);
+  border: 1px solid var(--button-border);
+  color: var(--text-main);
+}
+</style>
