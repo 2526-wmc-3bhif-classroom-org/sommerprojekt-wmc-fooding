@@ -1,8 +1,11 @@
 import * as express from "express";
 import { StatusCodes } from "http-status-codes";
 import { ProductService } from "./product-service";
+import { isAuthenticated } from "../../middleware/auth-handlers";
 
 export const productRouter = express.Router();
+
+productRouter.use(isAuthenticated);
 
 productRouter.post("/", (req, res) => {
     const { name, default_unit } = req.body;
