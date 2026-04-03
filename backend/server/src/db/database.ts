@@ -10,18 +10,26 @@ const dataDir = path.join(process.cwd(), "data");
 const dbFileName = path.join(dataDir, "food.db");
 
 export class DB {
+    private static instance: DatabaseType | null = null;
+
+    public static getConnection(): DatabaseType {
+        if (!DB.instance) {
+            fs.mkdirSync(dataDir, { recursive: true });
+
+            DB.instance = new BetterSqlite3(dbFileName, {
+                fileMustExist: false,
+                verbose: (s: unknown) => DB.logStatement(s)
+            });
+
+            DB.instance.pragma("foreign_keys = ON");
+            DB.ensureTablesCreated(DB.instance);
+        }
+
+        return DB.instance;
+    }
+
     public static createDBConnection(): DatabaseType {
-        fs.mkdirSync(dataDir, { recursive: true });
-
-        const db = new BetterSqlite3(dbFileName, {
-            fileMustExist: false,
-            verbose: (s: unknown) => DB.logStatement(s)
-        });
-
-        db.pragma("foreign_keys = ON");
-        DB.ensureTablesCreated(db);
-
-        return db;
+        return DB.getConnection();
     }
 
     public static beginTransaction(connection: DatabaseType): void {
