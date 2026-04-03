@@ -1,38 +1,42 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { StatusCodes } from 'http-status-codes';
 import 'dotenv/config';
 
 const SECRET_KEY = process.env.JWT_SECRET || 'fallback-key';
 
 export interface AuthRequest extends Request {
-    payload?: JwtPayload;
+    user?: {
+        id: number;
+        email: string;
+        role: string;
+    };
 }
-// Verifies the user's identity
-export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
+
+export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = req.header('Authorization')?.replace('Bearer ', '');
-        if (!token) {
-            throw new Error("No bearer token available");
+        const authHeader = req.header('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(StatusCodes.UNAUTHORIZED).json({ message: "No bearer token available" });
         }
 
-        const decoded = jwt.verify(token, SECRET_KEY) as JwtPayload;
-        (req as AuthRequest).payload = decoded;
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, SECRET_KEY) as any;
+        
+        // Match the structure from auth-router.ts sign() call: { user: userClaims }
+        (req as AuthRequest).user = decoded.user;
 
         next();
     } catch (err) {
-        res.status(401).send(`Bitte authentifizieren! ${err}`);
+        return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Ungültiger oder abgelaufener Token" });
     }
 };
 
-export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const payload = (req as AuthRequest).payload;
-        if (payload && payload.user && payload.user.role === 'admin') {
-            next();
-        } else {
-            res.status(401).send('Admin-Rolle erforderlich');
-        }
-    } catch (err) {
-        res.status(401).send('Authentifizierung erforderlich');
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+    const user = (req as AuthRequest).user;
+    if (user && user.role === 'admin') {
+        next();
+    } else {
+        res.status(StatusCodes.FORBIDDEN).json({ message: 'Admin-Rolle erforderlich' });
     }
 };
