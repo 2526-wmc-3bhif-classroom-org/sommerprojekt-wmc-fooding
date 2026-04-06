@@ -1,9 +1,10 @@
+import 'dotenv/config';
 import * as express from "express";
 import { DB } from "./db/database";
 import { authRouter } from "./routers/auth-router";
 import { productRouter } from "./models/product/product-routes";
+import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
 import * as cors from 'cors';
-import 'dotenv/config';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -16,13 +17,23 @@ try {
   console.error("FAILED to connect to DB:", error);
 }
 
+// ai help because of bugs
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use(cors());
 app.use(express.json());
 
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
 app.use('/auth', authRouter);
 app.use('/products', productRouter);
+app.use('/inventory-items', inventoryRouter);
 
 
 app.get('/health', (req, res) => {
