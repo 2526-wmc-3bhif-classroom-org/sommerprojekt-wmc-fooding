@@ -26,7 +26,7 @@ export interface User {
   role: string
 }
 
-const API_URL = 'http://127.0.0.1:3000'
+const API_URL = 'http://127.0.0.1:8080'
 
 class AuthService {
   private _token: Ref<string | null> = ref(null)
