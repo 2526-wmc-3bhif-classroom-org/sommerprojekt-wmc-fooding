@@ -8,24 +8,18 @@ export interface User {
 }
 
 export class UserRepository {
+    private static get db() {
+        return DB.getConnection();
+    }
+
     public static findByEmail(email: string): User | undefined {
-        const db = DB.createDBConnection();
-        try {
-            const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | undefined;
-            return user;
-        } finally {
-            db.close();
-        }
+        const user = this.db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | undefined;
+        return user;
     }
 
     public static create(user: User): number {
-        const db = DB.createDBConnection();
-        try {
-            const result = db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)")
-                .run(user.email, user.password_hash);
-            return result.lastInsertRowid as number;
-        } finally {
-            db.close();
-        }
+        const result = this.db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)")
+            .run(user.email, user.password_hash);
+        return result.lastInsertRowid as number;
     }
 }
