@@ -1,7 +1,7 @@
 import { ProductRepository, Product } from "./product-repository";
 
 export class ProductService {
-    public static createProduct(name: string, default_unit: string): { success: boolean; product_id?: number; message?: string } {
+    public static createProduct(name: string, default_unit: string, category?: string): { success: boolean; product_id?: number; message?: string } {
         if (!name || name.trim().length === 0) {
             return { success: false, message: "Product name is required" };
         }
@@ -11,7 +11,7 @@ export class ProductService {
         }
 
         try {
-            const product_id = ProductRepository.create(name.trim(), default_unit.trim());
+            const product_id = ProductRepository.create(name.trim(), default_unit.trim(), category?.trim());
             return { success: true, product_id };
         } catch (error) {
             console.error("Error creating product:", error);
@@ -42,7 +42,7 @@ export class ProductService {
         }
     }
 
-    public static updateProduct(product_id: number, name: string, default_unit: string): { success: boolean; message?: string } {
+    public static updateProduct(product_id: number, name: string, default_unit: string, category?: string): { success: boolean; message?: string } {
         if (!name || name.trim().length === 0) {
             return { success: false, message: "Product name is required" };
         }
@@ -52,7 +52,7 @@ export class ProductService {
         }
 
         try {
-            const updated = ProductRepository.update(product_id, name.trim(), default_unit.trim());
+            const updated = ProductRepository.update(product_id, name.trim(), default_unit.trim(), category?.trim());
             if (!updated) {
                 return { success: false, message: "Product not found" };
             }
