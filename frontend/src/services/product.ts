@@ -4,6 +4,7 @@ export interface Product {
   product_id?: number
   name: string
   default_unit: string
+  category?: string
 }
 
 export interface CreateProductResponse {
@@ -27,7 +28,7 @@ export interface DeleteProductResponse {
   message: string
 }
 
-const API_URL = 'http://127.0.0.1:3000'
+const API_URL = 'http://127.0.0.1:8080'
 
 class ProductService {
   private getHeaders(): HeadersInit {
@@ -38,11 +39,11 @@ class ProductService {
     }
   }
 
-  async createProduct(name: string, default_unit: string): Promise<CreateProductResponse> {
+  async createProduct(name: string, default_unit: string, category?: string): Promise<CreateProductResponse> {
     const response = await fetch(`${API_URL}/products`, {
       method: 'POST',
       headers: this.getHeaders(),
-      body: JSON.stringify({ name, default_unit })
+      body: JSON.stringify({ name, default_unit, category })
     })
 
     if (!response.ok) {
@@ -83,11 +84,11 @@ class ProductService {
     return data.product
   }
 
-  async updateProduct(product_id: number, name: string, default_unit: string): Promise<UpdateProductResponse> {
+  async updateProduct(product_id: number, name: string, default_unit: string, category?: string): Promise<UpdateProductResponse> {
     const response = await fetch(`${API_URL}/products/${product_id}`, {
       method: 'PUT',
       headers: this.getHeaders(),
-      body: JSON.stringify({ name, default_unit })
+      body: JSON.stringify({ name, default_unit, category })
     })
 
     if (!response.ok) {
