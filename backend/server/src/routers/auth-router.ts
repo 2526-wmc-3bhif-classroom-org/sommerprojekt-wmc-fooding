@@ -8,7 +8,7 @@ import 'dotenv/config';
 
 //no ai use here just almost the same like in the fruit backend the teacher gave us
 export const authRouter = express.Router();
-const SECRET_KEY = process.env.JWT_SECRET || 'fallback-key';
+const getSecretKey = () => (process.env.JWT_SECRET || 'fallback-key').trim();
 
 authRouter.post("/login", (req, res) => {
     const { email, password } = req.body;
@@ -29,7 +29,7 @@ authRouter.post("/login", (req, res) => {
         role: user.role || 'user'
     };
 
-    const token = jwt.sign({ user: userClaims }, SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ user: userClaims }, getSecretKey(), { expiresIn: '7d' });
 
     res.status(StatusCodes.OK).json({
         user: userClaims,
@@ -59,7 +59,7 @@ authRouter.post("/register", (req, res) => {
         role: 'user'
     };
 
-    const token = jwt.sign({ user: userClaims }, SECRET_KEY, { expiresIn: '1h' });
+    const token = jwt.sign({ user: userClaims }, getSecretKey(), { expiresIn: '7d' });
 
     res.status(StatusCodes.CREATED).json({
         user: userClaims,
