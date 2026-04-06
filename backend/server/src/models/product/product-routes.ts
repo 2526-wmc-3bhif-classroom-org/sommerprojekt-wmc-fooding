@@ -8,7 +8,7 @@ export const productRouter = express.Router();
 productRouter.use(isAuthenticated);
 
 productRouter.post("/", (req, res) => {
-    const { name, default_unit } = req.body;
+    const { name, default_unit, category } = req.body;
 
     if (!name || !default_unit) {
         return res.status(StatusCodes.BAD_REQUEST).json({ 
@@ -16,7 +16,7 @@ productRouter.post("/", (req, res) => {
         });
     }
 
-    const result = ProductService.createProduct(name, default_unit);
+    const result = ProductService.createProduct(name, default_unit, category);
 
     if (!result.success) {
         return res.status(StatusCodes.BAD_REQUEST).json({ 
@@ -68,7 +68,7 @@ productRouter.get("/:id", (req, res) => {
 
 productRouter.put("/:id", (req, res) => {
     const product_id = parseInt(req.params.id);
-    const { name, default_unit } = req.body;
+    const { name, default_unit, category } = req.body;
 
     if (isNaN(product_id)) {
         return res.status(StatusCodes.BAD_REQUEST).json({ 
@@ -82,7 +82,7 @@ productRouter.put("/:id", (req, res) => {
         });
     }
 
-    const result = ProductService.updateProduct(product_id, name, default_unit);
+    const result = ProductService.updateProduct(product_id, name, default_unit, category);
 
     if (!result.success) {
         return res.status(StatusCodes.NOT_FOUND).json({ 
