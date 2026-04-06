@@ -1,57 +1,8 @@
 <template>
-  <div class="page" :class="theme">
+  <div class="dashboard-page">
     <div class="ambient ambient-1"></div>
     <div class="ambient ambient-2"></div>
     <div class="ambient ambient-3"></div>
-
-    <header class="topbar glass">
-      <nav class="nav-links" aria-label="Main navigation">
-        <router-link to="/inventory" class="nav-link">Inventar</router-link>
-        <router-link to="/products" class="nav-link">Produkte</router-link>
-      </nav>
-
-      <div class="header-actions">
-        <!-- Login/Logout Button -->
-        <button
-          v-if="!isAuthenticated"
-          class="login-btn"
-          type="button"
-          @click="showAuthModal = true"
-        >
-          Login
-        </button>
-        <div v-else class="user-section">
-          <span class="user-email">{{ user?.email }}</span>
-          <button class="logout-btn" type="button" @click="handleLogout">
-            Logout
-          </button>
-        </div>
-
-        <!-- Theme Toggle -->
-        <button
-          class="theme-toggle"
-          type="button"
-          :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-          @click="toggleTheme"
-        >
-          <span class="toggle-track">
-            <span class="toggle-thumb">
-              <span v-if="theme === 'dark'">☾</span>
-              <span v-else>☀</span>
-            </span>
-          </span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Auth Modal -->
-    <div v-if="showAuthModal" class="modal-overlay" @click="closeAuthModal">
-      <div class="modal-content" @click.stop>
-        <button class="close-btn" @click="closeAuthModal">✕</button>
-        <h2>Authentifizierung</h2>
-        <AuthForm @success="handleAuthSuccess" />
-      </div>
-    </div>
 
     <main class="hero-layout">
       <section class="intro-panel glass">
@@ -104,9 +55,7 @@
 <script lang="ts">
 import { computed, defineComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { authService } from '@/services/auth'
-import AuthForm from '@/components/AuthForm.vue'
-
-type ThemeMode = 'dark' | 'light';
+import { themeStore } from '@/store/theme'
 
 type SlideItem = {
   id: number
@@ -117,18 +66,9 @@ type SlideItem = {
 
 export default defineComponent({
   name: 'MainPage',
-  components: {
-    AuthForm
-  },
   setup() {
-    const theme = ref<ThemeMode>('light')
     const activeIndex = ref(0)
     let intervalId: number | null = null
-
-    // Auth State (Reactive through authService)
-    const showAuthModal = ref(false)
-    const isAuthenticated = computed(() => authService.isAuthenticated)
-    const user = computed(() => authService.user)
 
     const slides = ref<SlideItem[]>([
       {
@@ -162,15 +102,6 @@ export default defineComponent({
       return slides.value[activeIndex.value] ?? fallbackSlide
     })
 
-    const updateDocumentTheme = () => {
-      document.documentElement.setAttribute('data-theme', theme.value)
-    }
-
-    const toggleTheme = () => {
-      theme.value = theme.value === 'dark' ? 'light' : 'dark'
-      updateDocumentTheme()
-    }
-
     const nextSlide = () => {
       activeIndex.value = (activeIndex.value + 1) % slides.value.length
     }
@@ -187,20 +118,7 @@ export default defineComponent({
       intervalId = window.setInterval(nextSlide, 4500)
     }
 
-    const closeAuthModal = () => {
-      showAuthModal.value = false
-    }
-
-    const handleAuthSuccess = () => {
-      closeAuthModal()
-    }
-
-    const handleLogout = () => {
-      authService.logout()
-    }
-
     onMounted(() => {
-      updateDocumentTheme()
       startSlider()
     })
 
@@ -209,24 +127,31 @@ export default defineComponent({
     })
 
     return {
-      theme,
+      themeStore,
       currentSlide,
-      toggleTheme,
-      showAuthModal,
-      isAuthenticated,
-      user,
-      closeAuthModal,
-      handleAuthSuccess,
-      handleLogout
     }
   }
 });
 </script>
 
 <style scoped>
-/* Gemeinsames Styling wird importiert  */
 @import '@/assets/page-layout.css';
 
+.dashboard-page {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent ambient elements from causing horizontal scroll */
+}
+
+.hero-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 0.95fr);
+  gap: 20px;
+  min-height: 0;
+}
 
 /* Mithilfe von KI */
 .intro-image-wrap {
@@ -276,6 +201,10 @@ export default defineComponent({
   padding: clamp(22px, 3vw, 32px);
   background: linear-gradient(to top, rgba(14, 11, 8, 0.72), rgba(14, 11, 8, 0.08));
   backdrop-filter: blur(3px);
+}
+
+.dark .slide-overlay {
+  background: linear-gradient(to top, rgba(14, 11, 8, 0.9), rgba(14, 11, 8, 0.06));
 }
 
 .light .slide-overlay {
