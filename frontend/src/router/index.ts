@@ -22,28 +22,20 @@ const router = createRouter({
       component: () => import('@/views/InventoryView.vue'),
       meta: { requiresAuth: true },
     },
-    {
-      path: '/products',
-      name: 'products',
-      component: () => import('@/views/ProductsView.vue'),
-      meta: { requiresAuth: true },
-    },
   ],
 })
 
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const isAuthenticated = authService.isAuthenticated
   const requiresAuth = to.meta.requiresAuth
 
   if (requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
+    return { name: 'login' }
   }
-  else if (to.name === 'login' && isAuthenticated) {
-    next({ name: 'home' })
-  }
-  else {
-    next()
+  
+  if (to.name === 'login' && isAuthenticated) {
+    return { name: 'home' }
   }
 })
 
