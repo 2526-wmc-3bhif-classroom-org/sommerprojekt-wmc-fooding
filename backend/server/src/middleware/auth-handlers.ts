@@ -3,7 +3,6 @@ import { Request, Response, NextFunction } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import 'dotenv/config';
 
-// ai help because there were a lot of trouble with the tokens
 const getSecretKey = () => (process.env.JWT_SECRET || 'fallback-key').trim();
 
 export interface AuthRequest extends Request {
@@ -31,7 +30,6 @@ export const isAuthenticated = (req: Request, res: Response, next: NextFunction)
         (req as AuthRequest).user = decoded.user;
 
         next();
-        // also here because of major problems. Ai was used for bug search
     } catch (err: any) {
         console.error("JWT Verification Error:", err.message);
         let message = "Ungültiger oder abgelaufener Token";
