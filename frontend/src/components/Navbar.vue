@@ -49,7 +49,7 @@ const searchQuery = ref('');
 
 const handleLogout = () => {
   authService.logout();
-  router.push('/login');
+  router.push('/');
 };
 
 const handleLogin = () => {
