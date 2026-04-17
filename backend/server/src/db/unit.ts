@@ -8,7 +8,7 @@ import { DB } from "./database";
 type RawStatement<TResult> = BetterSqlite3.Statement<unknown[], TResult>;
 type RunResult = ReturnType<RawStatement<unknown>["run"]>;
 
-export interface ITypedStatement<TResult = unknown, TParams = Record<string, unknown>> {
+export interface ITypedStatement<TResult = unknown, TParams = any> {
     readonly _params?: TParams;
     get(): TResult | undefined;
     all(): TResult[];
@@ -28,14 +28,26 @@ export class Unit {
         }
     }
 
-    public prepare<TResult, TParams extends Record<string, unknown> = Record<string, unknown>>(
+    public prepare<TResult, TParams = any>(
         sql: string,
         bindings?: TParams
     ): ITypedStatement<TResult, TParams> {
-        const stmt = this.db.prepare(sql) as BetterSqlite3.Statement<[TParams], TResult>;
+        const stmt = this.db.prepare(sql);
 
         if (bindings != null) {
-            stmt.bind(bindings);
+            if (Array.isArray(bindings)) {
+                return {
+                    get: () => stmt.get(...bindings) as TResult | undefined,
+                    all: () => stmt.all(...bindings) as TResult[],
+                    run: () => stmt.run(...bindings) as RunResult,
+                } as ITypedStatement<TResult, TParams>;
+            } else {
+                return {
+                    get: () => stmt.get(bindings) as TResult | undefined,
+                    all: () => stmt.all(bindings) as TResult[],
+                    run: () => stmt.run(bindings) as RunResult,
+                } as ITypedStatement<TResult, TParams>;
+            }
         }
 
         return stmt as unknown as ITypedStatement<TResult, TParams>;
@@ -71,6 +83,5 @@ export class Unit {
             throw new Error("Transaction is open. You must explicitly commit or rollback.");
         }
 
-        this.db.close();
     }
 }
