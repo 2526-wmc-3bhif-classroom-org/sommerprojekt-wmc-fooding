@@ -50,7 +50,11 @@ export class Unit {
             }
         }
 
-        return stmt as unknown as ITypedStatement<TResult, TParams>;
+        return {
+            get: () => stmt.get() as TResult | undefined,
+            all: () => stmt.all() as TResult[],
+            run: () => stmt.run() as RunResult,
+        } as ITypedStatement<TResult, TParams>;
     }
 
     public getLastRowId(): number {

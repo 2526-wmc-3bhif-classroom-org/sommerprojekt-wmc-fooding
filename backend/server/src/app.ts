@@ -4,6 +4,7 @@ import { DB } from "./db/database";
 import { authRouter } from "./routers/auth-router";
 import { productRouter } from "./models/product/product-routes";
 import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
+import {recipeRouter} from "./models/recipe/recipe-routes";
 import * as cors from 'cors';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use((req, res, next) => {
 app.use('/auth', authRouter);
 app.use('/products', productRouter);
 app.use('/inventory-items', inventoryRouter);
+app.use('/recipes', recipeRouter)
 
 
 app.get('/health', (req, res) => {

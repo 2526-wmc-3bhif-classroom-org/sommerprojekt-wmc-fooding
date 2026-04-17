@@ -52,4 +52,14 @@ export class InventoryItemRepository {
             .run(inventory_id, userId);
         return result.changes > 0;
     }
+
+    public static getTotalAmount(userId: number, productId: number): number {
+        const result = this.db.prepare(`
+            SELECT SUM(quantity) as total 
+            FROM inventory_items 
+            WHERE user_id = ? AND product_id = ?
+        `).get(userId, productId) as { total: number | null };
+        
+        return result?.total || 0;
+    }
 }
