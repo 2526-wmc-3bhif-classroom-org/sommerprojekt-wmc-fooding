@@ -19,10 +19,9 @@ export class RecipeRepository {
         unit.prepare(`
             INSERT INTO recipes (user_id, title, instructions)
             VALUES (?, ?, ?)
-        `).run();
-        
-        const recipeId = unit.getLastRowId();
-        return recipeId;
+        `, [recipe.user_id, recipe.title, recipe.instructions]).run();
+
+        return unit.getLastRowId();
     }
 
     public findById(unit: Unit, recipeId: number): Recipe | undefined {
@@ -30,7 +29,7 @@ export class RecipeRepository {
             SELECT recipe_id, user_id, title, instructions
             FROM recipes
             WHERE recipe_id = ?
-        `, { recipeId }).get();
+        `, [recipeId]).get();
     }
 
     public findByUserId(unit: Unit, userId: number): Recipe[] {
@@ -39,35 +38,37 @@ export class RecipeRepository {
             FROM recipes
             WHERE user_id = ?
             ORDER BY title
-        `, { userId }).all();
+        `, [userId]).all();
     }
 
     public update(unit: Unit, recipeId: number, recipe: Partial<Recipe>): void {
         const updates: string[] = [];
-        const params: any = { recipeId };
+        const values: any[] = [];
 
         if (recipe.title !== undefined) {
-            updates.push("title = $title");
-            params.title = recipe.title;
+            updates.push("title = ?");
+            values.push(recipe.title);
         }
         if (recipe.instructions !== undefined) {
-            updates.push("instructions = $instructions");
-            params.instructions = recipe.instructions;
+            updates.push("instructions = ?");
+            values.push(recipe.instructions);
         }
 
         if (updates.length === 0) return;
 
+        values.push(recipeId);
+
         unit.prepare(`
             UPDATE recipes 
             SET ${updates.join(", ")}
-            WHERE recipe_id = $recipeId
-        `, params).run();
+            WHERE recipe_id = ?
+        `, values).run();
     }
 
     public delete(unit: Unit, recipeId: number): void {
         unit.prepare(`
             DELETE FROM recipes WHERE recipe_id = ?
-        `, { recipeId }).run();
+        `, [recipeId]).run();
     }
 
     public getIngredientsForRecipe(unit: Unit, recipeId: number): RecipeIngredient[] {
@@ -76,21 +77,21 @@ export class RecipeRepository {
             FROM recipe_ingredients ri
             JOIN products p ON ri.product_id = p.product_id
             WHERE ri.recipe_id = ?
-        `, { recipeId }).all();
+        `, [recipeId]).all();
     }
 
     public addIngredient(unit: Unit, recipeId: number, productId: number, quantity: number): void {
         unit.prepare(`
             INSERT INTO recipe_ingredients (recipe_id, product_id, quantity)
             VALUES (?, ?, ?)
-        `, { recipeId, productId, quantity }).run();
+        `, [recipeId, productId, quantity]).run();
     }
 
     public removeIngredient(unit: Unit, recipeId: number, productId: number): void {
         unit.prepare(`
             DELETE FROM recipe_ingredients 
             WHERE recipe_id = ? AND product_id = ?
-        `, { recipeId, productId }).run();
+        `, [recipeId, productId]).run();
     }
 
     public updateIngredientQuantity(unit: Unit, recipeId: number, productId: number, quantity: number): void {
@@ -98,6 +99,6 @@ export class RecipeRepository {
             UPDATE recipe_ingredients 
             SET quantity = ?
             WHERE recipe_id = ? AND product_id = ?
-        `, { quantity, recipeId, productId }).run();
+        `, [quantity, recipeId, productId]).run();
     }
 }
