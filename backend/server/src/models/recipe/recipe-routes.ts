@@ -8,8 +8,7 @@ const recipeService = new RecipeService();
 
 recipeRouter.post("/", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -34,8 +33,7 @@ recipeRouter.post("/", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -50,8 +48,7 @@ recipeRouter.get("/", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/suggestions", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -66,8 +63,7 @@ recipeRouter.get("/suggestions", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -95,8 +91,7 @@ recipeRouter.get("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.put("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -127,8 +122,7 @@ recipeRouter.put("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.delete("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -157,8 +151,7 @@ recipeRouter.delete("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.post("/:id/ingredients", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -192,8 +185,7 @@ recipeRouter.post("/:id/ingredients", isAuthenticated, (req, res) => {
 
 recipeRouter.delete("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -224,8 +216,7 @@ recipeRouter.delete("/:id/ingredients/:productId", isAuthenticated, (req, res) =
 
 recipeRouter.put("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -261,8 +252,7 @@ recipeRouter.put("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
 
 recipeRouter.post("/:id/shopping-list", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
