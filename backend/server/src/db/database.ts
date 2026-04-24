@@ -14,11 +14,20 @@ export class DB {
 
     public static getConnection(): DatabaseType {
         if (!DB.instance) {
-            fs.mkdirSync(dataDir, { recursive: true });
+            const isTest = process.env.NODE_ENV === 'test';
+            const dbPath = isTest ? ":memory:" : dbFileName;
 
-            DB.instance = new BetterSqlite3(dbFileName, {
+            if (!isTest) {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+
+            DB.instance = new BetterSqlite3(dbPath, {
                 fileMustExist: false,
-                verbose: (s: unknown) => DB.logStatement(s)
+                verbose: (s: unknown) => {
+                    if (process.env.NODE_ENV !== 'test') {
+                        DB.logStatement(s);
+                    }
+                }
             });
 
             DB.instance.pragma("foreign_keys = ON");
@@ -26,6 +35,13 @@ export class DB {
         }
 
         return DB.instance;
+    }
+
+    public static closeConnection(): void {
+        if (DB.instance) {
+            DB.instance.close();
+            DB.instance = null;
+        }
     }
 
     public static createDBConnection(): DatabaseType {
