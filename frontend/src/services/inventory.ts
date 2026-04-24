@@ -11,7 +11,7 @@ export interface InventoryItem {
     category?: string;
 }
 
-const API_URL = 'http://127.0.0.1:8080/inventory-items';
+const API_URL = 'http://127.0.0.1:3000/inventory-items';
 
 export const inventoryService = {
     async getInventory(): Promise<InventoryItem[]> {
