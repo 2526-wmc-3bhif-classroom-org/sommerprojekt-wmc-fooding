@@ -38,3 +38,44 @@ shoppingListRouter.post("/", (req: AuthRequest, res) => {
     }
 });
 
+shoppingListRouter.put("/:id", (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const shopping_item_id = parseInt(req.params.id);
+    const { quantity, checked } = req.body;
+
+    try {
+        let success = false;
+
+        if (checked !== undefined) {
+            success = ShoppingListItemRepository.setChecked(shopping_item_id, userId, Boolean(checked));
+        } else if (quantity !== undefined) {
+            success = ShoppingListItemRepository.update(shopping_item_id, userId, quantity);
+        } else {
+            return res.status(StatusCodes.BAD_REQUEST).json({ message: "Fehlende Daten" });
+        }
+
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: "Aktualisiert" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ message: "Nicht gefunden" });
+        }
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Aktualisieren" });
+    }
+});
+
+shoppingListRouter.delete("/:id", (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+    const shopping_item_id = parseInt(req.params.id);
+
+    try {
+        const success = ShoppingListItemRepository.delete(shopping_item_id, userId);
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: "Gelöscht" });
+        } else {
+            res.status(StatusCodes.NOT_FOUND).json({ message: "Nicht gefunden" });
+        }
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Löschen" });
+    }
+});
