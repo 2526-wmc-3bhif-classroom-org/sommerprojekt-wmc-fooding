@@ -5,6 +5,7 @@ import { authRouter } from "./routers/auth-router";
 import { productRouter } from "./models/product/product-routes";
 import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
 import {recipeRouter} from "./models/recipe/recipe-routes";
+import { shoppingListRouter } from "./models/shopping_list_item/shopping-list-item-routes";
 import * as cors from 'cors';
 
 export const app = express();
@@ -36,7 +37,8 @@ app.use((req, res, next) => {
 app.use('/auth', authRouter);
 app.use('/products', productRouter);
 app.use('/inventory-items', inventoryRouter);
-app.use('/recipes', recipeRouter)
+app.use('/recipes', recipeRouter);
+app.use('/shopping-list', shoppingListRouter);
 
 
 app.get('/health', (req, res) => {
