@@ -122,7 +122,13 @@ export class RecipeService {
 
                 if (amountInFridge < item.quantity) {
                     const missingAmount = item.quantity - amountInFridge;
-                    ShoppingListItemRepository.addItem(userId, item.product_id, recipeId, missingAmount);
+                    ShoppingListItemRepository.create({
+                        user_id: userId,
+                        product_id: item.product_id,
+                        recipe_id: recipeId,
+                        quantity: missingAmount
+
+                    });
                 }
             }
 
