@@ -113,7 +113,7 @@ export class DB {
                 quantity REAL NOT NULL,
                 expiration_date TEXT NOT NULL,
                 location TEXT,
-                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
                 FOREIGN KEY (product_id) REFERENCES products(product_id)
             );
 
