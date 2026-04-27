@@ -11,6 +11,8 @@ export interface AuthRequest extends Request {
         email: string;
         role: string;
     };
+    body: any;
+    params: any;
 }
 
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
