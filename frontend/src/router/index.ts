@@ -22,6 +22,12 @@ const router = createRouter({
       component: () => import('@/views/InventoryView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/shopping-list',
+      name: 'shopping-list',
+      component: () => import('@/views/ShoppingListView.vue'),
+      meta: { requiresAuth: true }
+    }
   ],
 })
 
@@ -33,10 +39,12 @@ router.beforeEach((to, from) => {
   if (requiresAuth && !isAuthenticated) {
     return { name: 'login' }
   }
-  
+
   if (to.name === 'login' && isAuthenticated) {
     return { name: 'home' }
   }
 })
+
+
 
 export default router
