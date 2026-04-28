@@ -9,8 +9,6 @@ export interface RecipeWithIngredients extends Recipe {
 
 export class RecipeService {
     private recipeRepo = new RecipeRepository();
-    private inventoryRepo = new InventoryItemRepository();
-    private shoppingRepo = new ShoppingListItemRepository();
 
     public createRecipe(userId: number, title: string, instructions: string, ingredients: Array<{ productId: number, quantity: number }>): number {
         const unit = new Unit(false);
@@ -120,11 +118,17 @@ export class RecipeService {
             const neededIngredients = this.recipeRepo.getIngredientsForRecipe(unit, recipeId);
 
             for (const item of neededIngredients) {
-                const amountInFridge = this.inventoryRepo.getTotalAmount(userId, item.product_id);
+                const amountInFridge = InventoryItemRepository.getTotalAmount(userId, item.product_id);
 
                 if (amountInFridge < item.quantity) {
                     const missingAmount = item.quantity - amountInFridge;
-                    this.shoppingRepo.addItem(userId, item.product_id, recipeId, missingAmount);
+                    ShoppingListItemRepository.create({
+                        user_id: userId,
+                        product_id: item.product_id,
+                        recipe_id: recipeId,
+                        quantity: missingAmount
+
+                    });
                 }
             }
 
@@ -146,7 +150,7 @@ export class RecipeService {
                 let canMake = true;
 
                 for (const ingredient of ingredients) {
-                    const available = this.inventoryRepo.getTotalAmount(userId, ingredient.product_id);
+                    const available = InventoryItemRepository.getTotalAmount(userId, ingredient.product_id);
                     if (available < ingredient.quantity) {
                         canMake = false;
                         break;

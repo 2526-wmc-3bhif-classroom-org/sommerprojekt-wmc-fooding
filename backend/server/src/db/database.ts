@@ -14,11 +14,20 @@ export class DB {
 
     public static getConnection(): DatabaseType {
         if (!DB.instance) {
-            fs.mkdirSync(dataDir, { recursive: true });
+            const isTest = process.env.NODE_ENV === 'test';
+            const dbPath = isTest ? ":memory:" : dbFileName;
 
-            DB.instance = new BetterSqlite3(dbFileName, {
+            if (!isTest) {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+
+            DB.instance = new BetterSqlite3(dbPath, {
                 fileMustExist: false,
-                verbose: (s: unknown) => DB.logStatement(s)
+                verbose: (s: unknown) => {
+                    if (process.env.NODE_ENV !== 'test') {
+                        DB.logStatement(s);
+                    }
+                }
             });
 
             DB.instance.pragma("foreign_keys = ON");
@@ -26,6 +35,13 @@ export class DB {
         }
 
         return DB.instance;
+    }
+
+    public static closeConnection(): void {
+        if (DB.instance) {
+            DB.instance.close();
+            DB.instance = null;
+        }
     }
 
     public static createDBConnection(): DatabaseType {
@@ -62,7 +78,8 @@ export class DB {
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT NOT NULL UNIQUE,                                 
-                password_hash TEXT NOT NULL
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user'
             );
 
             CREATE TABLE IF NOT EXISTS products (
@@ -96,7 +113,7 @@ export class DB {
                 quantity REAL NOT NULL,
                 expiration_date TEXT NOT NULL,
                 location TEXT,
-                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
                 FOREIGN KEY (product_id) REFERENCES products(product_id)
             );
 
