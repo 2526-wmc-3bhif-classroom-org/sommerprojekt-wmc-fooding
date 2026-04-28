@@ -43,7 +43,7 @@ inventoryRouter.post("/", (req: AuthRequest, res) => {
 
 inventoryRouter.put("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const inventory_id = parseInt(req.params.id);
+    const inventory_id = parseInt(req.params.id as string);
     const { quantity, expiration_date, location } = req.body;
 
     try {
@@ -67,7 +67,7 @@ inventoryRouter.put("/:id", (req: AuthRequest, res) => {
 
 inventoryRouter.delete("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const inventory_id = parseInt(req.params.id);
+    const inventory_id = parseInt(req.params.id as string);
 
     try {
         const success = InventoryItemRepository.delete(inventory_id, userId);
