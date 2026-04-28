@@ -40,7 +40,7 @@ shoppingListRouter.post("/", (req: AuthRequest, res) => {
 
 shoppingListRouter.put("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const shopping_item_id = parseInt(req.params.id);
+    const shopping_item_id = parseInt(req.params.id as string);
     const { quantity, checked } = req.body;
 
     try {
@@ -66,7 +66,7 @@ shoppingListRouter.put("/:id", (req: AuthRequest, res) => {
 
 shoppingListRouter.delete("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    const shopping_item_id = parseInt(req.params.id);
+    const shopping_item_id = parseInt(req.params.id as string);
 
     try {
         const success = ShoppingListItemRepository.delete(shopping_item_id, userId);
