@@ -8,8 +8,7 @@ const recipeService = new RecipeService();
 
 recipeRouter.post("/", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -34,8 +33,7 @@ recipeRouter.post("/", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -50,8 +48,7 @@ recipeRouter.get("/", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/suggestions", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
@@ -66,13 +63,12 @@ recipeRouter.get("/suggestions", isAuthenticated, (req, res) => {
 
 recipeRouter.get("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
+        const recipeId = parseInt(req.params.id as string);
         if (isNaN(recipeId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid recipe ID" });
         }
@@ -95,13 +91,12 @@ recipeRouter.get("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.put("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
+        const recipeId = parseInt(req.params.id as string);
         if (isNaN(recipeId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid recipe ID" });
         }
@@ -127,13 +122,12 @@ recipeRouter.put("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.delete("/:id", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
+        const recipeId = parseInt(req.params.id as string);
         if (isNaN(recipeId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid recipe ID" });
         }
@@ -157,13 +151,12 @@ recipeRouter.delete("/:id", isAuthenticated, (req, res) => {
 
 recipeRouter.post("/:id/ingredients", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
+        const recipeId = parseInt(req.params.id as string);
         if (isNaN(recipeId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid recipe ID" });
         }
@@ -192,14 +185,13 @@ recipeRouter.post("/:id/ingredients", isAuthenticated, (req, res) => {
 
 recipeRouter.delete("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
-        const productId = parseInt(req.params.productId);
+        const recipeId = parseInt(req.params.id as string);
+        const productId = parseInt(req.params.productId as string);
 
         if (isNaN(recipeId) || isNaN(productId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid ID" });
@@ -224,14 +216,13 @@ recipeRouter.delete("/:id/ingredients/:productId", isAuthenticated, (req, res) =
 
 recipeRouter.put("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
-        const productId = parseInt(req.params.productId);
+        const recipeId = parseInt(req.params.id as string);
+        const productId = parseInt(req.params.productId as string);
 
         if (isNaN(recipeId) || isNaN(productId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid ID" });
@@ -261,13 +252,12 @@ recipeRouter.put("/:id/ingredients/:productId", isAuthenticated, (req, res) => {
 
 recipeRouter.post("/:id/shopping-list", isAuthenticated, (req, res) => {
     try {
-        const payload = (req as AuthRequest).payload;
-        const userId = payload?.user?.id;
+        const userId = (req as AuthRequest).user?.id;
         if (!userId) {
             return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
         }
 
-        const recipeId = parseInt(req.params.id);
+        const recipeId = parseInt(req.params.id as string);
         if (isNaN(recipeId)) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: "Invalid recipe ID" });
         }

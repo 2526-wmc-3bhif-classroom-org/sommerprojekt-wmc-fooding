@@ -18,8 +18,8 @@ export class UserRepository {
     }
 
     public static create(user: User): number {
-        const result = this.db.prepare("INSERT INTO users (email, password_hash) VALUES (?, ?)")
-            .run(user.email, user.password_hash);
+        const result = this.db.prepare("INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)")
+            .run(user.email, user.password_hash, user.role || 'user');
         return result.lastInsertRowid as number;
     }
 }

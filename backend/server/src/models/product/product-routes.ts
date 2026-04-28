@@ -45,7 +45,7 @@ productRouter.get("/", (req, res) => {
 });
 
 productRouter.get("/:id", (req, res) => {
-    const product_id = parseInt(req.params.id);
+    const product_id = parseInt(req.params.id as string);
 
     if (isNaN(product_id)) {
         return res.status(StatusCodes.BAD_REQUEST).json({ 
@@ -67,7 +67,7 @@ productRouter.get("/:id", (req, res) => {
 });
 
 productRouter.put("/:id", (req, res) => {
-    const product_id = parseInt(req.params.id);
+    const product_id = parseInt(req.params.id as string);
     const { name, default_unit, category } = req.body;
 
     if (isNaN(product_id)) {
@@ -96,7 +96,7 @@ productRouter.put("/:id", (req, res) => {
 });
 
 productRouter.delete("/:id", (req, res) => {
-    const product_id = parseInt(req.params.id);
+    const product_id = parseInt(req.params.id as string);
 
     if (isNaN(product_id)) {
         return res.status(StatusCodes.BAD_REQUEST).json({ 
