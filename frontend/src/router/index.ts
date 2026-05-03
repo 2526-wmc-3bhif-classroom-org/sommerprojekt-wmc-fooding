@@ -23,6 +23,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/recipes',
+      name: 'recipes',
+      component: () => import('@/views/MainPage.vue'), // Placeholder
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/shopping-list',
       name: 'shopping-list',
       component: () => import('@/views/ShoppingListView.vue'),

@@ -1,58 +1,90 @@
 <script setup lang="ts">
 import Navbar from '@/components/Navbar.vue'
 import { themeStore } from '@/store/theme'
+import { ref, provide, computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isReceded = ref(false)
+
+const showNavbar = computed(() => route.name !== 'login')
+
+// Provide a way for child components to control navbar state
+const setNavbarRecede = (state: boolean) => {
+  isReceded.value = state
+}
+
+provide('navbarControl', { setNavbarRecede })
 </script>
 
 <template>
-  <div class="layout-wrapper" :class="themeStore.theme">
-    <Navbar class="layout-navbar" />
-    <main class="layout-content">
+  <div class="default-layout" :class="[themeStore.theme, { 'no-navbar': !showNavbar }]">
+    <!-- Ambients shared across all pages -->
+    <div class="ambient ambient-1"></div>
+    <div class="ambient ambient-2"></div>
+    
+    <Navbar v-if="showNavbar" :recede="isReceded" />
+    
+    <main class="main-content">
       <slot></slot>
     </main>
   </div>
 </template>
 
 <style scoped>
-.layout-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+.default-layout {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.main-content {
+  position: relative;
+  z-index: 1;
+  padding-top: 120px; /* Space for fixed navbar */
   width: 100%;
-  overflow: hidden;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: all 0.3s ease;
+  transition: padding 0.3s ease;
 }
 
-.layout-navbar {
-  flex-shrink: 0;
+.no-navbar .main-content {
+  padding-top: 0;
 }
 
-.layout-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden; /* Prevent horizontal scroll in content area */
-  padding: 40px 60px;
+.ambient {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(120px);
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Base theme variables */
-:global(:root) {
-  --bg-color: #f8f9f8;
-  --text-color: #2d5a27;
-  --navbar-bg: #fcfdfc;
+.ambient-1 {
+  width: 600px;
+  height: 600px;
+  top: -150px;
+  left: -150px;
+  background: var(--green);
 }
 
-:global([data-theme='dark']) {
-  --bg-color: #1a1a1a;
-  --text-color: #e0e0e0;
-  --navbar-bg: #242424;
+.ambient-2 {
+  width: 700px;
+  height: 700px;
+  top: 30%;
+  right: -250px;
+  background: #059669;
 }
 
-@media (max-width: 1024px) {
-  .layout-content { padding: 30px 40px; }
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-@media (max-width: 768px) {
-  .layout-content { padding: 20px; }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
