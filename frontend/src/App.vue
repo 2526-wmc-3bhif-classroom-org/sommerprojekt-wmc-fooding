@@ -1,25 +1,36 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView } from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import { themeStore } from '@/store/theme'
-
-const route = useRoute()
-const layout = computed(() => {
-     return route.meta.requiresAuth || route.path === '/' ? DefaultLayout : 'div'
-})
 
 themeStore.updateDocument()
 </script>
 
 <template>
-  <component :is="layout">
-    <RouterView />
-  </component>
+  <DefaultLayout>
+    <RouterView v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </RouterView>
+  </DefaultLayout>
 </template>
 
 <style>
-* {
-  transition: background-color 0.2s, border-color 0.2s;
+@import '@/assets/page-layout.css';
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1), transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>
