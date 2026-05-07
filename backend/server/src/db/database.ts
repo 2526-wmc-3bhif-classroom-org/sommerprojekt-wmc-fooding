@@ -32,6 +32,7 @@ export class DB {
 
             DB.instance.pragma("foreign_keys = ON");
             DB.ensureTablesCreated(DB.instance);
+            DB.runMigrations(DB.instance);
         }
 
         return DB.instance;
@@ -71,6 +72,24 @@ export class DB {
         }
 
         console.log(`SQL: ${statement}`);
+    }
+
+    private static runMigrations(connection: DatabaseType): void {
+        try {
+            connection.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE inventory_items ADD COLUMN location TEXT`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE products ADD COLUMN category TEXT`);
+        } catch {
+            // column already exists
+        }
     }
 
     private static ensureTablesCreated(connection: DatabaseType): void {
