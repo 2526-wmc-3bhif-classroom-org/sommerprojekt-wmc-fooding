@@ -1,5 +1,245 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, inject } from 'vue'
+import { useRouter } from 'vue-router'
+import { recipeService, type Recipe, type RecipeWithIngredients } from '@/services/recipe'
+import { productService, type Product } from '@/services/product'
+import UiButton from '@/components/ui/UiButton.vue'
+import UiCard from '@/components/ui/UiCard.vue'
+import UiBadge from '@/components/ui/UiBadge.vue'
+import UiInput from '@/components/ui/UiInput.vue'
+import {
+  Search,
+  Plus,
+  Trash2,
+  Edit2,
+  ChefHat,
+  ShoppingCart,
+  Sparkles,
+  BookOpen,
+  X
+} from 'lucide-vue-next'
 
+const router = useRouter()
+const navbarControl = inject<{ setNavbarRecede: (state: boolean) => void }>('navbarControl')
+
+const activeTab = ref<'all' | 'cookable'>('all')
+const searchQuery = ref('')
+const isLoading = ref(true)
+const isSaving = ref(false)
+const isLoadingDetail = ref(false)
+const isAddingToList = ref(false)
+
+const recipes = ref<Recipe[]>([])
+const cookableIds = ref<Set<number>>(new Set())
+const selectedRecipe = ref<RecipeWithIngredients | null>(null)
+const allProducts = ref<Product[]>([])
+
+const showDetailPanel = ref(false)
+const showFormPanel = ref(false)
+const editingRecipe = ref<Recipe | null>(null)
+
+const formData = ref({
+  title: '',
+  instructions: '',
+  ingredients: [] as { productId: number; quantity: number; name: string; unit: string }[]
+})
+
+const ingredientDraft = ref({
+  productId: 0,
+  quantity: 1
+})
+
+const saveError = ref('')
+
+const getEmoji = (title: string) => {
+  const t = title.toLowerCase()
+  if (t.includes('pasta') || t.includes('nudel') || t.includes('spaghetti')) return '🍝'
+  if (t.includes('salat') || t.includes('salad')) return '🥗'
+  if (t.includes('suppe') || t.includes('soup')) return '🍲'
+  if (t.includes('pizza')) return '🍕'
+  if (t.includes('burger')) return '🍔'
+  if (t.includes('reis') || t.includes('rice')) return '🍚'
+  if (t.includes('hähnchen') || t.includes('chicken') || t.includes('hühnchen')) return '🍗'
+  if (t.includes('fisch') || t.includes('fish') || t.includes('lachs')) return '🐟'
+  if (t.includes('steak') || t.includes('fleisch')) return '🥩'
+  if (t.includes('kuchen') || t.includes('cake') || t.includes('torte')) return '🎂'
+  if (t.includes('pfannkuchen') || t.includes('pancake')) return '🥞'
+  if (t.includes('wrap') || t.includes('tortilla')) return '🌯'
+  if (t.includes('toast') || t.includes('brot')) return '🍞'
+  if (t.includes('curry')) return '🍛'
+  if (t.includes('omelette') || t.includes('ei') || t.includes('egg')) return '🍳'
+  if (t.includes('smoothie') || t.includes('shake')) return '🥤'
+  return '🍽️'
+}
+
+const displayedRecipes = computed(() => {
+  let source = activeTab.value === 'cookable'
+    ? recipes.value.filter(r => cookableIds.value.has(r.recipe_id!))
+    : recipes.value
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    source = source.filter(r =>
+      r.title.toLowerCase().includes(q) ||
+      r.instructions.toLowerCase().includes(q)
+    )
+  }
+  return source
+})
+
+const cookableCount = computed(() =>
+  recipes.value.filter(r => cookableIds.value.has(r.recipe_id!)).length
+)
+
+const selectedProductForDraft = computed(() =>
+  allProducts.value.find(p => p.product_id === ingredientDraft.value.productId) ?? null
+)
+
+const loadData = async () => {
+  isLoading.value = true
+  try {
+    const [recipesData, productsData, suggestionsData] = await Promise.all([
+      recipeService.getRecipes(),
+      productService.getProducts(),
+      recipeService.getSuggestions()
+    ])
+    recipes.value = recipesData
+    allProducts.value = productsData
+    cookableIds.value = new Set(suggestionsData.map(r => r.recipe_id!))
+  } catch (error: unknown) {
+    if (error?.toString().includes('401')) router.push('/login')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const openDetail = async (recipe: Recipe) => {
+  isLoadingDetail.value = true
+  showDetailPanel.value = true
+  showFormPanel.value = false
+  navbarControl?.setNavbarRecede(true)
+  try {
+    selectedRecipe.value = await recipeService.getRecipeById(recipe.recipe_id!)
+  } catch {
+    selectedRecipe.value = null
+  } finally {
+    isLoadingDetail.value = false
+  }
+}
+
+const closeDetail = () => {
+  showDetailPanel.value = false
+  selectedRecipe.value = null
+  navbarControl?.setNavbarRecede(false)
+}
+
+const openCreateForm = () => {
+  editingRecipe.value = null
+  formData.value = { title: '', instructions: '', ingredients: [] }
+  ingredientDraft.value = { productId: 0, quantity: 1 }
+  saveError.value = ''
+  showFormPanel.value = true
+  showDetailPanel.value = false
+  navbarControl?.setNavbarRecede(true)
+}
+
+const openEditForm = (recipe: RecipeWithIngredients) => {
+  editingRecipe.value = recipe
+  formData.value = {
+    title: recipe.title,
+    instructions: recipe.instructions,
+    ingredients: recipe.ingredients.map(i => ({
+      productId: i.product_id,
+      quantity: i.quantity,
+      name: i.name ?? '',
+      unit: i.default_unit ?? ''
+    }))
+  }
+  ingredientDraft.value = { productId: 0, quantity: 1 }
+  saveError.value = ''
+  showDetailPanel.value = false
+  showFormPanel.value = true
+}
+
+const closeForm = () => {
+  showFormPanel.value = false
+  editingRecipe.value = null
+  navbarControl?.setNavbarRecede(showDetailPanel.value)
+}
+
+const addIngredientToDraft = () => {
+  if (!ingredientDraft.value.productId) return
+  const product = allProducts.value.find(p => p.product_id === ingredientDraft.value.productId)
+  if (!product) return
+  const already = formData.value.ingredients.find(i => i.productId === ingredientDraft.value.productId)
+  if (already) return
+  formData.value.ingredients.push({
+    productId: product.product_id!,
+    quantity: ingredientDraft.value.quantity,
+    name: product.name,
+    unit: product.default_unit
+  })
+  ingredientDraft.value = { productId: 0, quantity: 1 }
+}
+
+const removeIngredient = (index: number) => {
+  formData.value.ingredients.splice(index, 1)
+}
+
+const saveRecipe = async () => {
+  if (!formData.value.title.trim() || !formData.value.instructions.trim()) {
+    saveError.value = 'Titel und Anleitung sind erforderlich.'
+    return
+  }
+  isSaving.value = true
+  saveError.value = ''
+  try {
+    if (editingRecipe.value && editingRecipe.value.recipe_id != null) {
+      await recipeService.updateRecipe(editingRecipe.value.recipe_id, {
+        title: formData.value.title.trim(),
+        instructions: formData.value.instructions.trim()
+      })
+    } else {
+      await recipeService.createRecipe(
+        formData.value.title.trim(),
+        formData.value.instructions.trim(),
+        formData.value.ingredients.map(i => ({ productId: i.productId, quantity: i.quantity }))
+      )
+    }
+    await loadData()
+    closeForm()
+  } catch (error: unknown) {
+    const err = error as Error
+    saveError.value = err?.message || 'Unbekannter Fehler.'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const deleteRecipe = async (recipe: Recipe) => {
+  if (!confirm(`"${recipe.title}" wirklich löschen?`)) return
+  try {
+    await recipeService.deleteRecipe(recipe.recipe_id!)
+    recipes.value = recipes.value.filter(r => r.recipe_id !== recipe.recipe_id)
+    closeDetail()
+  } catch {
+    alert('Fehler beim Löschen.')
+  }
+}
+
+const addMissingToShoppingList = async (recipe: Recipe) => {
+  isAddingToList.value = true
+  try {
+    await recipeService.addMissingToShoppingList(recipe.recipe_id!)
+    router.push('/shopping-list')
+  } catch {
+    alert('Fehler beim Hinzufügen zur Einkaufsliste.')
+  } finally {
+    isAddingToList.value = false
+  }
+}
+
+onMounted(loadData)
 </script>
 
 <template>
