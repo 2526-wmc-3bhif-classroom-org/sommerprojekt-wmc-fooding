@@ -25,7 +25,7 @@ const router = createRouter({
     {
       path: '/recipes',
       name: 'recipes',
-      component: () => import('@/views/MainPage.vue'), // Placeholder
+      component: () => import('@/views/RecipesView.vue'),
       meta: { requiresAuth: true },
     },
     {
