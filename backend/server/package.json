@@ -2,9 +2,9 @@
   "name": "server",
   "version": "1.0.0",
   "description": "Backend für das Sommerprojekt",
-  "main": "dist/app.js",
+  "main": "dist/src/app.js",
   "scripts": {
-    "start": "node dist/app.js",
+    "start": "node dist/src/app.js",
     "dev": "ts-node-dev src/app.ts",
     "build": "tsc",
     "test": "jest"
