@@ -4,6 +4,28 @@ import { StatusCodes } from "http-status-codes";
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from "../models/user/user-repository";
 import 'dotenv/config';
+import * as multer from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
+import { isAuthenticated, AuthRequest } from "../middleware/auth-handlers";
+
+// Configure multer for file uploads
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage });
 
 
 //no ai use here just almost the same like in the fruit backend the teacher gave us
@@ -66,4 +88,25 @@ authRouter.post("/register", (req, res) => {
         accessToken: token,
         message: "Registrierung erfolgreich"
     });
+});
+
+authRouter.put("/profile/image", isAuthenticated, upload.single('image'), (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+
+    if (!req.file) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ message: "Kein Bild hochgeladen" });
+    }
+
+    const imagePath = `/uploads/${req.file.filename}`;
+
+    try {
+        const success = UserRepository.updateImage(userId, imagePath);
+        if (success) {
+            res.status(StatusCodes.OK).json({ message: "Profilbild aktualisiert", image: imagePath });
+        } else {
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Update" });
+        }
+    } catch (error) {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Update des Profilbildes" });
+    }
 });

@@ -17,7 +17,8 @@ import {
   Grid, 
   List,
   Plus,
-  ArrowRight
+  ArrowRight,
+  Camera
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -120,6 +121,28 @@ const deleteItem = async (item: InventoryItem) => {
   } catch (e) {}
 }
 
+const uploadImage = async (item: InventoryItem, file: File) => {
+  try {
+    const imageUrl = await inventoryService.uploadImage(item.inventory_id!, file)
+    item.image = imageUrl
+  } catch (e) {
+    alert('Fehler beim Hochladen des Bildes')
+  }
+}
+
+const triggerFileInput = (id: number) => {
+  const input = document.getElementById(`fileInput-${id}`) as HTMLInputElement
+  input?.click()
+}
+
+const handleFileUpload = (item: InventoryItem, event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (file) {
+    uploadImage(item, file)
+  }
+}
+
 onMounted(loadData)
 </script>
 
@@ -203,6 +226,9 @@ onMounted(loadData)
             </div>
             
             <div class="item-body">
+              <div v-if="item.image" class="item-image">
+                <img :src="`http://127.0.0.1:3000${item.image}`" alt="Produktbild" />
+              </div>
               <h3 class="item-name">{{ item.product_name }}</h3>
               <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.location }}</p>
             </div>
@@ -214,6 +240,16 @@ onMounted(loadData)
                 <button @click="changeQuantity(item, 1)"><Plus :size="16" /></button>
               </div>
               <div class="tool-actions">
+                <button class="upload-btn" @click="triggerFileInput(item.inventory_id!)">
+                  <Camera :size="16" />
+                </button>
+                <input 
+                  :id="`fileInput-${item.inventory_id}`"
+                  type="file" 
+                  accept="image/*" 
+                  style="display: none" 
+                  @change="(e) => handleFileUpload(item, e)"
+                />
                 <button class="delete-btn" @click="deleteItem(item)">
                   <Trash2 :size="16" />
                 </button>
@@ -367,4 +403,29 @@ onMounted(loadData)
 .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }
 .empty-state h3 { color: var(--text-main); margin: 24px 0 8px; }
 .mt-4 { margin-top: 1.5rem; }
+
+.item-image {
+  margin-bottom: 12px;
+}
+
+.item-image img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.upload-btn {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.upload-btn:hover {
+  background: var(--blue-dark);
+}
 </style>

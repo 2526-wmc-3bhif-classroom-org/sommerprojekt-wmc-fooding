@@ -7,6 +7,28 @@ import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
 import {recipeRouter} from "./models/recipe/recipe-routes";
 import { shoppingListRouter } from "./models/shopping_list_item/shopping-list-item-routes";
 import * as cors from 'cors';
+import * as multer from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+export const upload = multer({ storage });
 
 export const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -28,6 +50,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadsDir));
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);

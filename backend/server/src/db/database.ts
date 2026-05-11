@@ -90,6 +90,16 @@ export class DB {
         } catch {
             // column already exists
         }
+        try {
+            connection.exec(`ALTER TABLE users ADD COLUMN image TEXT`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE inventory_items ADD COLUMN image TEXT`);
+        } catch {
+            // column already exists
+        }
     }
 
     private static ensureTablesCreated(connection: DatabaseType): void {
