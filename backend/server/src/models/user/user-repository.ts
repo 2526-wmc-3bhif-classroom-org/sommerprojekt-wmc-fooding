@@ -14,7 +14,7 @@ export class UserRepository {
     }
 
     public static findByEmail(email: string): User | undefined {
-        const user = this.db.prepare("SELECT * FROM users WHERE email = ?").get(email) as User | undefined;
+        const user = this.db.prepare("SELECT user_id, email, password_hash, role, image FROM users WHERE email = ?").get(email) as User | undefined;
         return user;
     }
 

@@ -6,11 +6,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  user: {
-    email: string
-    id: number
-    role: string
-  }
+  user: User
   accessToken: string
   message: string
 }
@@ -24,6 +20,7 @@ export interface User {
   email: string
   id: number
   role: string
+  image?: string
 }
 
 const API_URL = 'http://127.0.0.1:3000'
@@ -110,6 +107,13 @@ class AuthService {
 
     const data = await response.json();
     return data.image;
+  }
+
+  updateUserImage(image: string): void {
+    if (!this._user.value) return
+    const updatedUser = { ...this._user.value, image }
+    this._user.value = updatedUser
+    localStorage.setItem('user', JSON.stringify(updatedUser))
   }
 
   private setSession(token: string, user: User): void {

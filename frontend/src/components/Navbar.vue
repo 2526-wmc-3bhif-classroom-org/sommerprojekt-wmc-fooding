@@ -114,7 +114,8 @@ const handleLogout = () => {
         <template v-else>
           <div class="profile-section">
             <div class="user-avatar" @click="toggleProfile">
-              <div class="avatar-placeholder">
+              <img v-if="user?.image" :src="`http://127.0.0.1:3000${user.image}`" alt="Profilbild" class="avatar-image" />
+              <div v-else class="avatar-placeholder">
                 {{ user?.email.charAt(0).toUpperCase() || 'U' }}
               </div>
               <ChevronDown :size="14" class="chevron" :class="{ open: isProfileOpen }" />
@@ -376,6 +377,13 @@ const handleLogout = () => {
   align-items: center;
   justify-content: center;
   font-weight: 800;
+}
+
+.avatar-image {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  object-fit: cover;
 }
 
 .chevron {

@@ -87,6 +87,7 @@ const saveImage = async () => {
     try {
       const imageUrl = await authService.uploadProfileImage(selectedFile.value)
       userImage.value = imageUrl
+      authService.updateUserImage(imageUrl)
       selectedFile.value = null
       previewImage.value = ''
     } catch (e) {
@@ -103,8 +104,9 @@ const cancelImage = () => {
 }
 
 onMounted(() => {
-  // Lade das aktuelle Profilbild, falls vorhanden
-  // Hier könnte man eine API aufrufen, um das Profil zu laden
+  if (authService.user?.image) {
+    userImage.value = authService.user.image
+  }
 })
 </script>
 
