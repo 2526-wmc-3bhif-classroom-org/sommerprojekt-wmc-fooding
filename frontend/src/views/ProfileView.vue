@@ -9,7 +9,8 @@
       <div class="profile-content">
         <div class="avatar-section">
           <div class="avatar-container">
-            <img v-if="userImage" :src="`http://127.0.0.1:3000${userImage}`" alt="Profilbild" class="avatar-image" />
+            <img v-if="previewImage" :src="previewImage" alt="Vorschau" class="avatar-image" />
+            <img v-else-if="userImage" :src="`http://127.0.0.1:3000${userImage}`" alt="Profilbild" class="avatar-image" />
             <div v-else class="avatar-placeholder">
               {{ authService.user?.email.charAt(0).toUpperCase() || 'U' }}
             </div>
@@ -20,12 +21,20 @@
               type="file"
               accept="image/*"
               style="display: none"
-              @change="handleFileUpload"
+              @change="handleFileSelect"
             />
-            <UiButton @click="triggerFileInput">
+            <UiButton v-if="!previewImage" @click="triggerFileInput">
               <Camera :size="18" />
               Bild ändern
             </UiButton>
+            <div v-else class="preview-actions">
+              <UiButton @click="saveImage">
+                Speichern
+              </UiButton>
+              <UiButton variant="secondary" @click="cancelImage">
+                Abbrechen
+              </UiButton>
+            </div>
           </div>
         </div>
 
@@ -52,23 +61,45 @@ import { Camera } from 'lucide-vue-next'
 import { authService } from '@/services/auth'
 
 const userImage = ref<string>('')
+const selectedFile = ref<File | null>(null)
+const previewImage = ref<string>('')
 
 const triggerFileInput = () => {
   const input = document.getElementById('fileInput') as HTMLInputElement
   input?.click()
 }
 
-const handleFileUpload = async (event: Event) => {
+const handleFileSelect = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (file) {
+    selectedFile.value = file
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      previewImage.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+const saveImage = async () => {
+  if (selectedFile.value) {
     try {
-      const imageUrl = await authService.uploadProfileImage(file)
+      const imageUrl = await authService.uploadProfileImage(selectedFile.value)
       userImage.value = imageUrl
+      selectedFile.value = null
+      previewImage.value = ''
     } catch (e) {
       alert('Fehler beim Hochladen des Bildes')
     }
   }
+}
+
+const cancelImage = () => {
+  selectedFile.value = null
+  previewImage.value = ''
+  const input = document.getElementById('fileInput') as HTMLInputElement
+  if (input) input.value = ''
 }
 
 onMounted(() => {
@@ -147,6 +178,11 @@ onMounted(() => {
 }
 
 .avatar-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.preview-actions {
   display: flex;
   gap: 12px;
 }
