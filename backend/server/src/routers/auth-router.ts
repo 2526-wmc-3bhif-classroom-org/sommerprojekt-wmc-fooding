@@ -48,7 +48,8 @@ authRouter.post("/login", (req, res) => {
     const userClaims = {
         email: user.email,
         id: user.user_id,
-        role: user.role || 'user'
+        role: user.role || 'user',
+        image: user.image
     };
 
     const token = jwt.sign({ user: userClaims }, getSecretKey(), { expiresIn: '7d' });
@@ -78,7 +79,8 @@ authRouter.post("/register", (req, res) => {
     const userClaims = {
         email: email,
         id: userId,
-        role: 'user'
+        role: 'user',
+        image: null
     };
 
     const token = jwt.sign({ user: userClaims }, getSecretKey(), { expiresIn: '7d' });
