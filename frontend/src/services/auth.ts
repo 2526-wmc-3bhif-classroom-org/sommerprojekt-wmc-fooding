@@ -91,6 +91,27 @@ class AuthService {
     localStorage.removeItem('user')
   }
 
+  async uploadProfileImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`${API_URL}/auth/profile/image`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${this._token.value}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Fehler beim Hochladen des Profilbildes');
+    }
+
+    const data = await response.json();
+    return data.image;
+  }
+
   private setSession(token: string, user: User): void {
     this._token.value = token
     this._user.value = user

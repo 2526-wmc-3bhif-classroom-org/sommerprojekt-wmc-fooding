@@ -6,6 +6,7 @@ export interface InventoryItem {
     quantity: number;
     expiration_date: string;
     location?: string;
+    image?: string;
     product_name?: string;
     default_unit?: string;
     category?: string;
@@ -71,5 +72,26 @@ export const inventoryService = {
         if (!response.ok) {
             throw new Error('Fehler beim Löschen');
         }
+    },
+
+    async uploadImage(id: number, file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${API_URL}/${id}/image`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Fehler beim Hochladen des Bildes');
+        }
+
+        const data = await response.json();
+        return data.image;
     }
 };

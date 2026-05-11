@@ -7,6 +7,7 @@ export interface InventoryItem {
     quantity: number;
     expiration_date: string;
     location?: string;
+    image?: string;
     // Joined fields
     product_name?: string;
     default_unit?: string;
@@ -43,6 +44,16 @@ export class InventoryItemRepository {
             SET quantity = ?, expiration_date = ?, location = ? 
             WHERE inventory_id = ? AND user_id = ?
         `).run(item.quantity, item.expiration_date, item.location, item.inventory_id, item.user_id);
+        
+        return result.changes > 0;
+    }
+
+    public static updateImage(inventory_id: number, userId: number, image: string): boolean {
+        const result = this.db.prepare(`
+            UPDATE inventory_items 
+            SET image = ? 
+            WHERE inventory_id = ? AND user_id = ?
+        `).run(image, inventory_id, userId);
         
         return result.changes > 0;
     }
