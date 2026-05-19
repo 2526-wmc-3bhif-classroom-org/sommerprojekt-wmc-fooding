@@ -1,6 +1,7 @@
+.backend/server/data/*.db
 .idea
 node_modules
 .env
 dist
-.vscode
-package-lock.json
+backend/server/data/*.db
+backend/server/src/uploads

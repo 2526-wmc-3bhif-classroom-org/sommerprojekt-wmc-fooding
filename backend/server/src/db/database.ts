@@ -1,35 +1,63 @@
-import BetterSqlite3 from "better-sqlite3";
-import type { Database } from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+// NO AI used here, but copied code from the CRUD Flightmanagement exercise and adjusted it
+
+
+import BetterSqlite3 = require("better-sqlite3");
+import type { Database as DatabaseType } from "better-sqlite3";
+import * as path from "path";
+import * as fs from "fs";
 
 const dataDir = path.join(process.cwd(), "data");
-const dbFileName = path.join(dataDir, "app.db");
+const dbFileName = path.join(dataDir, "food.db");
 
 export class DB {
-    public static createDBConnection(): Database {
-        fs.mkdirSync(dataDir, { recursive: true });
+    private static instance: DatabaseType | null = null;
 
-        const db = new BetterSqlite3(dbFileName, {
-            fileMustExist: false,
-            verbose: (s: unknown) => DB.logStatement(s)
-        });
+    public static getConnection(): DatabaseType {
+        if (!DB.instance) {
+            const isTest = process.env.NODE_ENV === 'test';
+            const dbPath = isTest ? ":memory:" : dbFileName;
 
-        db.pragma("foreign_keys = ON");
-        DB.ensureTablesCreated(db);
+            if (!isTest) {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
 
-        return db;
+            DB.instance = new BetterSqlite3(dbPath, {
+                fileMustExist: false,
+                verbose: (s: unknown) => {
+                    if (process.env.NODE_ENV !== 'test') {
+                        DB.logStatement(s);
+                    }
+                }
+            });
+
+            DB.instance.pragma("foreign_keys = ON");
+            DB.ensureTablesCreated(DB.instance);
+            DB.runMigrations(DB.instance);
+        }
+
+        return DB.instance;
     }
 
-    public static beginTransaction(connection: Database): void {
+    public static closeConnection(): void {
+        if (DB.instance) {
+            DB.instance.close();
+            DB.instance = null;
+        }
+    }
+
+    public static createDBConnection(): DatabaseType {
+        return DB.getConnection();
+    }
+
+    public static beginTransaction(connection: DatabaseType): void {
         connection.exec("BEGIN TRANSACTION;");
     }
 
-    public static commitTransaction(connection: Database): void {
+    public static commitTransaction(connection: DatabaseType): void {
         connection.exec("COMMIT;");
     }
 
-    public static rollbackTransaction(connection: Database): void {
+    public static rollbackTransaction(connection: DatabaseType): void {
         connection.exec("ROLLBACK;");
     }
 
@@ -46,26 +74,56 @@ export class DB {
         console.log(`SQL: ${statement}`);
     }
 
-    private static ensureTablesCreated(connection: Database): void {
+    private static runMigrations(connection: DatabaseType): void {
+        try {
+            connection.exec(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE inventory_items ADD COLUMN location TEXT`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE products ADD COLUMN category TEXT`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE users ADD COLUMN image TEXT`);
+        } catch {
+            // column already exists
+        }
+        try {
+            connection.exec(`ALTER TABLE inventory_items ADD COLUMN image TEXT`);
+        } catch {
+            // column already exists
+        }
+    }
+
+    private static ensureTablesCreated(connection: DatabaseType): void {
         connection.exec(`
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL
+                email TEXT NOT NULL UNIQUE,                                 
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user'
             );
 
             CREATE TABLE IF NOT EXISTS products (
                 product_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                default_unit TEXT NOT NULL
+                default_unit TEXT NOT NULL,
+                category TEXT
             );
 
             CREATE TABLE IF NOT EXISTS recipes (
-                recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                title TEXT NOT NULL,
-                instructions TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                   recipe_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   user_id INTEGER NOT NULL,
+                   title TEXT NOT NULL,
+                    instructions TEXT NOT NULL,
+                   FOREIGN KEY (user_id) REFERENCES users(user_id)
             );
 
             CREATE TABLE IF NOT EXISTS recipe_ingredients (
@@ -83,7 +141,8 @@ export class DB {
                 product_id INTEGER NOT NULL,
                 quantity REAL NOT NULL,
                 expiration_date TEXT NOT NULL,
-                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                location TEXT,
+                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
                 FOREIGN KEY (product_id) REFERENCES products(product_id)
             );
 
