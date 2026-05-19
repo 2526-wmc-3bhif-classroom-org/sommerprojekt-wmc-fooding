@@ -1,23 +1,62 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import MainPage from '@/views/MainPage.vue'
+import LoginView from '@/views/LoginView.vue'
+import { authService } from '@/services/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/login',
+      name: 'login',
+      component: LoginView,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/',
+      name: 'home',
+      component: MainPage,
     },
+    {
+      path: '/inventory',
+      name: 'inventory',
+      component: () => import('@/views/InventoryView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/recipes',
+      name: 'recipes',
+      component: () => import('@/views/RecipesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/shopping-list',
+      name: 'shopping-list',
+      component: () => import('@/views/ShoppingListView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true }
+    }
   ],
 })
+
+
+router.beforeEach((to, from) => {
+  const isAuthenticated = authService.isAuthenticated
+  const requiresAuth = to.meta.requiresAuth
+
+  if (requiresAuth && !isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (to.name === 'login' && isAuthenticated) {
+    return { name: 'home' }
+  }
+})
+
+
 
 export default router
