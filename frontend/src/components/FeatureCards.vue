@@ -3,8 +3,7 @@ import UiCard from '@/components/ui/UiCard.vue'
 import { 
   Zap, 
   Eye, 
-  Sparkles,
-  ArrowRight
+  Sparkles
 } from 'lucide-vue-next'
 
 const features = [
@@ -50,13 +49,6 @@ const features = [
         
         <h3 class="feature-title">{{ feature.title }}</h3>
         <p class="feature-description">{{ feature.description }}</p>
-        
-        <div class="feature-footer">
-          <a href="#" class="feature-link">
-            Mehr erfahren
-            <ArrowRight :size="16" />
-          </a>
-        </div>
       </UiCard>
     </div>
   </section>
@@ -120,22 +112,6 @@ const features = [
 .feature-description {
   color: var(--text-muted);
   line-height: 1.7;
-  margin-bottom: 32px;
   flex-grow: 1;
 }
-
-.feature-footer { margin-top: auto; }
-
-.feature-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--blue);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: gap 0.2s;
-}
-
-.feature-link:hover { gap: 12px; }
 </style>

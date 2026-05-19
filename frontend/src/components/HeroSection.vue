@@ -1,11 +1,45 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import { ArrowRight, Play } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+import { authService } from '@/services/auth'
+import { inventoryService } from '@/services/inventory'
 
 const router = useRouter()
+
+const freshnessText = ref('95% deiner Zutaten sind frisch')
+
+const loadData = async () => {
+  if (!authService.isAuthenticated) {
+    freshnessText.value = 'Organisiere deine Küche'
+    return
+  }
+
+  try {
+    const inventory = await inventoryService.getInventory()
+    if (inventory.length === 0) {
+      freshnessText.value = 'Dein Inventar ist leer'
+      return
+    }
+
+    const today = new Date()
+    const soon = new Date()
+    soon.setDate(today.getDate() + 3)
+    const expiringCount = inventory.filter(i => new Date(i.expiration_date) <= soon).length
+    
+    const freshCount = inventory.length - expiringCount
+    const percentage = Math.round((freshCount / inventory.length) * 100)
+    
+    freshnessText.value = `${percentage}% deiner Zutaten sind frisch`
+  } catch (e) {
+    console.error('Error loading hero data:', e)
+  }
+}
+
+onMounted(loadData)
 
 const navigateToInventory = () => {
   router.push('/inventory')
@@ -57,7 +91,7 @@ const navigateToRecipes = () => {
             <div class="card-icon">🥗</div>
             <div class="card-text">
               <p class="card-title">Frische-Check</p>
-              <p class="card-subtitle">95% deiner Zutaten sind frisch</p>
+              <p class="card-subtitle">{{ freshnessText }}</p>
             </div>
           </UiCard>
         </div>

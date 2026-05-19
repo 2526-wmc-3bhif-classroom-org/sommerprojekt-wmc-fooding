@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as express from "express";
 import { DB } from "./db/database";
-import { authRouter } from "./routers/auth-router";
+import { userRouter } from "./models/user/user-routes";
 import { productRouter } from "./models/product/product-routes";
 import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
 import {recipeRouter} from "./models/recipe/recipe-routes";
@@ -59,7 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/auth', authRouter);
+app.use('/auth', userRouter);
 app.use('/products', productRouter);
 app.use('/inventory-items', inventoryRouter);
 app.use('/recipes', recipeRouter);

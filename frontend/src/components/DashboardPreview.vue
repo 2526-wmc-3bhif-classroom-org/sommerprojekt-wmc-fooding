@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import { 
@@ -9,23 +9,82 @@ import {
   ShoppingCart,
   ArrowRight
 } from 'lucide-vue-next'
+import { authService } from '@/services/auth'
+import { inventoryService } from '@/services/inventory'
+import { shoppingListService } from '@/services/shoppingLists'
+import { recipeService } from '@/services/recipe'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const stats = ref([
   {
     label: 'Inventar',
-    value: '12 Artikel gelagert',
+    value: '0 Artikel gelagert',
     icon: Package,
     color: '#4da3ff'
   },
   {
     label: 'Ablauf',
-    value: '3 Artikel laufen bald ab',
+    value: 'Alles frisch',
     icon: AlertTriangle,
     color: '#ef4444'
   }
 ])
 
-const shoppingItems = ref(['Milch', 'Eier', 'Brot', 'Avocado'])
+const shoppingItems = ref<string[]>([])
+const suggestionTitle = ref('Lade Vorschläge...')
+
+const loadData = async () => {
+  if (!authService.isAuthenticated) {
+    if (stats.value[0]) stats.value[0].value = 'Anmelden für Details'
+    if (stats.value[1]) stats.value[1].value = '-'
+    suggestionTitle.value = 'Melde dich an für Rezepte'
+    return
+  }
+
+  try {
+    const [inventory, shoppingList, recipes] = await Promise.all([
+      inventoryService.getInventory(),
+      shoppingListService.getItems(),
+      recipeService.getSuggestions()
+    ])
+
+    // Update Inventory Stats
+    if (stats.value[0]) stats.value[0].value = `${inventory.length} Artikel gelagert`
+    
+    const today = new Date()
+    const soon = new Date()
+    soon.setDate(today.getDate() + 3)
+    const expiringCount = inventory.filter(i => new Date(i.expiration_date) <= soon).length
+    
+    if (stats.value[1]) {
+      if (expiringCount > 0) {
+        stats.value[1].value = `${expiringCount} Artikel laufen bald ab`
+      } else {
+        stats.value[1].value = 'Alles frisch'
+      }
+    }
+
+    // Update Shopping List
+    shoppingItems.value = shoppingList.slice(0, 4).map(item => item.product_name || 'Unbekannt')
+    if (shoppingList.length === 0) {
+      shoppingItems.value = ['Liste leer']
+    }
+
+    // Update Recipe Suggestion
+    const firstRecipe = recipes[0]
+    if (firstRecipe) {
+      suggestionTitle.value = `"${firstRecipe.title}"`
+    } else {
+      suggestionTitle.value = 'Keine Vorschläge verfügbar'
+    }
+  } catch (error) {
+    console.error('Error loading dashboard preview data:', error)
+  }
+}
+
+onMounted(loadData)
 </script>
 
 <template>
@@ -55,9 +114,9 @@ const shoppingItems = ref(['Milch', 'Eier', 'Brot', 'Avocado'])
           </div>
           <div class="recipe-info">
             <h4 class="recipe-label">Koch-Inspiration</h4>
-            <p class="recipe-suggestion">"Pesto Pasta mit Tomaten"</p>
-            <UiButton size="sm">
-              Rezept ansehen
+            <p class="recipe-suggestion">{{ suggestionTitle }}</p>
+            <UiButton size="sm" @click="router.push('/recipes')">
+              Rezepte ansehen
               <ArrowRight :size="16" />
             </UiButton>
           </div>
