@@ -1,6 +1,6 @@
 import * as express from "express";
 import { StatusCodes } from "http-status-codes";
-import { InventoryItemRepository } from "./inventory-item-repository";
+import { InventoryItemService } from "./inventory-item-service";
 import { isAuthenticated, AuthRequest } from "../../middleware/auth-handlers";
 import * as multer from 'multer';
 import * as path from 'path';
@@ -30,11 +30,11 @@ inventoryRouter.use(isAuthenticated);
 
 inventoryRouter.get("/", (req: AuthRequest, res) => {
     const userId = req.user!.id;
-    try {
-        const items = InventoryItemRepository.findAllByUserId(userId);
-        res.status(StatusCodes.OK).json({ items });
-    } catch (error) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Laden des Inventars" });
+    const result = InventoryItemService.getInventoryByUserId(userId);
+    if (result.success) {
+        res.status(StatusCodes.OK).json({ items: result.items });
+    } else {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: result.message });
     }
 });
 
@@ -42,23 +42,19 @@ inventoryRouter.post("/", (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const { product_id, quantity, expiration_date, location } = req.body;
 
-    if (!product_id || !quantity || !expiration_date) {
-        console.warn("POST /inventory-items failed: missing data", { product_id, quantity, expiration_date });
-        return res.status(StatusCodes.BAD_REQUEST).json({ message: "Fehlende Daten" });
-    }
+    const result = InventoryItemService.addInventoryItem({
+        user_id: userId,
+        product_id,
+        quantity,
+        expiration_date,
+        location
+    });
 
-    try {
-        const inventory_id = InventoryItemRepository.create({
-            user_id: userId,
-            product_id,
-            quantity,
-            expiration_date,
-            location
-        });
-        res.status(StatusCodes.CREATED).json({ inventory_id, message: "Artikel hinzugefügt" });
-    } catch (error: any) {
-        console.error("POST /inventory-items failed with error:", error.message);
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Hinzufügen: " + error.message });
+    if (result.success) {
+        res.status(StatusCodes.CREATED).json({ inventory_id: result.inventory_id, message: "Artikel hinzugefügt" });
+    } else {
+        const status = result.message === "Invalid item data" ? StatusCodes.BAD_REQUEST : StatusCodes.INTERNAL_SERVER_ERROR;
+        res.status(status).json({ message: result.message });
     }
 });
 
@@ -67,22 +63,20 @@ inventoryRouter.put("/:id", (req: AuthRequest, res) => {
     const inventory_id = parseInt(req.params.id as string);
     const { quantity, expiration_date, location } = req.body;
 
-    try {
-        const success = InventoryItemRepository.update({
-            inventory_id,
-            user_id: userId,
-            product_id: 0,
-            quantity,
-            expiration_date,
-            location
-        });
-        if (success) {
-            res.status(StatusCodes.OK).json({ message: "Aktualisiert" });
-        } else {
-            res.status(StatusCodes.NOT_FOUND).json({ message: "Nicht gefunden" });
-        }
-    } catch (error) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Update" });
+    const result = InventoryItemService.updateInventoryItem({
+        inventory_id,
+        user_id: userId,
+        product_id: 0,
+        quantity,
+        expiration_date,
+        location
+    });
+
+    if (result.success) {
+        res.status(StatusCodes.OK).json({ message: "Aktualisiert" });
+    } else {
+        const status = result.message?.includes("not found") ? StatusCodes.NOT_FOUND : StatusCodes.INTERNAL_SERVER_ERROR;
+        res.status(status).json({ message: result.message });
     }
 });
 
@@ -90,15 +84,12 @@ inventoryRouter.delete("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const inventory_id = parseInt(req.params.id as string);
 
-    try {
-        const success = InventoryItemRepository.delete(inventory_id, userId);
-        if (success) {
-            res.status(StatusCodes.OK).json({ message: "Gelöscht" });
-        } else {
-            res.status(StatusCodes.NOT_FOUND).json({ message: "Nicht gefunden" });
-        }
-    } catch (error) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Löschen" });
+    const result = InventoryItemService.deleteInventoryItem(inventory_id, userId);
+    if (result.success) {
+        res.status(StatusCodes.OK).json({ message: "Gelöscht" });
+    } else {
+        const status = result.message?.includes("not found") ? StatusCodes.NOT_FOUND : StatusCodes.INTERNAL_SERVER_ERROR;
+        res.status(status).json({ message: result.message });
     }
 });
 
@@ -112,14 +103,11 @@ inventoryRouter.put("/:id/image", upload.single('image'), (req: AuthRequest, res
 
     const imagePath = `/uploads/${req.file.filename}`;
 
-    try {
-        const success = InventoryItemRepository.updateImage(inventory_id, userId, imagePath);
-        if (success) {
-            res.status(StatusCodes.OK).json({ message: "Bild aktualisiert", image: imagePath });
-        } else {
-            res.status(StatusCodes.NOT_FOUND).json({ message: "Artikel nicht gefunden" });
-        }
-    } catch (error) {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: "Fehler beim Update des Bildes" });
+    const result = InventoryItemService.updateItemImage(inventory_id, userId, imagePath);
+    if (result.success) {
+        res.status(StatusCodes.OK).json({ message: "Bild aktualisiert", image: imagePath });
+    } else {
+        const status = result.message?.includes("not found") ? StatusCodes.NOT_FOUND : StatusCodes.INTERNAL_SERVER_ERROR;
+        res.status(status).json({ message: result.message });
     }
 });
