@@ -950,18 +950,38 @@ onMounted(loadData)
 }
 
 .modern-select {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 12px 16px;
   color: var(--text-main);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
   font-size: 0.95rem;
+  font-weight: 500;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 18px;
 }
 
-.modern-select:focus { border-color: var(--green); }
+.modern-select:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--green);
+}
+
+.modern-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.modern-select option {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 10px;
+}
 
 .flex-1 { flex: 1; min-width: 0; }
 

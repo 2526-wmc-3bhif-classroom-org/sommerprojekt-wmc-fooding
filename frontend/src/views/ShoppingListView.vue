@@ -237,7 +237,8 @@ onMounted(loadData)
               </div>
               <div class="form-group">
                 <label class="ui-label">Kategorie</label>
-                <select v-model="formData.category" class="modern-select full">
+                <select v-model="formData.category" class="modern-select">
+                  <option value="" disabled>Kategorie wählen...</option>
                   <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                 </select>
               </div>
@@ -347,14 +348,38 @@ onMounted(loadData)
 .flex-1 { flex: 1; }
 
 .modern-select {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
-  padding: 12px;
+  padding: 14px;
   color: var(--text-main);
   outline: none;
   cursor: pointer;
   width: 100%;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 18px;
+}
+
+.modern-select:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--green);
+}
+
+.modern-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.modern-select option {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 10px;
 }
 
 .panel-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 20px; }
