@@ -306,7 +306,7 @@ onMounted(loadData)
   text-align: left;
 }
 
-.nav-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+.nav-btn:hover { background: var(--surface-hover); color: var(--text-main); }
 .nav-btn.active { background: var(--green); color: white; }
 
 .toolbar {
@@ -329,7 +329,7 @@ onMounted(loadData)
 }
 
 .modern-select {
-  background: #1e1e2e;
+  background: var(--select-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 10px 16px;
@@ -346,13 +346,13 @@ onMounted(loadData)
 }
 
 .modern-select option {
-  background: #1e1e2e;
-  color: #e2e8f0;
+  background: var(--select-option-bg);
+  color: var(--select-option-color);
 }
 
 .toggle-group {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 4px;
   border-radius: 12px;
   border: 1px solid var(--panel-border);
@@ -378,7 +378,7 @@ onMounted(loadData)
 .item-card { display: flex; flex-direction: column; gap: 20px; }
 
 .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-.item-visual { font-size: 2.5rem; background: rgba(255, 255, 255, 0.05); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.item-visual { font-size: 2.5rem; background: var(--surface-hover); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 
 .item-name { font-size: 1.25rem; font-weight: 700; margin: 0; }
 .item-meta { color: var(--text-muted); font-size: 0.9rem; margin: 4px 0 0; }
@@ -396,20 +396,20 @@ onMounted(loadData)
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 10px;
 }
 
 .qty-actions button { background: transparent; border: none; color: var(--text-main); cursor: pointer; padding: 4px; border-radius: 6px; }
-.qty-actions button:hover { background: rgba(255, 255, 255, 0.1); }
+.qty-actions button:hover { background: var(--surface-active); }
 
 .tool-actions { display: flex; gap: 8px; }
 .tool-actions button { background: transparent; border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px; border-radius: 10px; cursor: pointer; }
 .tool-actions .delete-btn:hover { border-color: #ef4444; color: #ef4444; }
 
 .loader { display: flex; justify-content: center; padding: 100px; }
-.spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }
