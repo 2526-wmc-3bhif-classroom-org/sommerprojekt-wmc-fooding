@@ -54,26 +54,26 @@ withDefaults(defineProps<Props>(), {
 }
 
 .secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   color: var(--text-main);
   border: 1px solid var(--panel-border);
 }
 
 .secondary:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--surface-active);
+  border-color: var(--panel-border);
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--panel-border);
 }
 
 .glass:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-active);
 }
 
 .danger {

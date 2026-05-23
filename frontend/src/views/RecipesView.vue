@@ -543,7 +543,7 @@ onMounted(loadData)
 
 .tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 18px;
   border: 1px solid var(--panel-border);
@@ -574,7 +574,7 @@ onMounted(loadData)
 }
 
 .tab-count {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--surface-active);
   padding: 2px 8px;
   border-radius: 20px;
   font-size: 0.75rem;
@@ -582,7 +582,7 @@ onMounted(loadData)
 }
 
 .tab-count.cookable {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--surface-active);
 }
 
 .tab-btn.active .tab-count {
@@ -670,7 +670,7 @@ onMounted(loadData)
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
+  border: 3px solid var(--panel-border);
   border-top-color: var(--green);
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -773,7 +773,7 @@ onMounted(loadData)
   height: 36px;
   border-radius: 10px;
   border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   color: var(--text-muted);
   cursor: pointer;
   display: flex;
@@ -783,7 +783,7 @@ onMounted(loadData)
 }
 
 .tool-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-active);
   color: var(--text-main);
 }
 
@@ -794,7 +794,7 @@ onMounted(loadData)
 }
 
 .tool-btn.close:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .panel-section {
@@ -832,7 +832,7 @@ onMounted(loadData)
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   border-radius: 12px;
 }
@@ -882,7 +882,7 @@ onMounted(loadData)
 }
 
 .modern-textarea {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 14px 16px;
@@ -897,7 +897,7 @@ onMounted(loadData)
 
 .modern-textarea:focus {
   border-color: var(--green);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.08);
 }
 
@@ -950,7 +950,7 @@ onMounted(loadData)
 }
 
 .modern-select {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--select-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 12px 16px;
@@ -961,25 +961,25 @@ onMounted(loadData)
   font-size: 0.95rem;
   font-weight: 500;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 18px;
 }
 
 .modern-select:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--surface-hover);
   border-color: var(--green);
 }
 
 .modern-select:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
 }
 
 .modern-select option {
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--select-option-bg);
+  color: var(--select-option-color);
   padding: 10px;
 }
 
@@ -988,7 +988,7 @@ onMounted(loadData)
 .qty-input {
   width: 72px;
   flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 12px 10px;
@@ -1039,7 +1039,7 @@ onMounted(loadData)
   color: var(--text-muted);
   margin: 0;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border-radius: 12px;
   border: 1px solid var(--panel-border);
 }

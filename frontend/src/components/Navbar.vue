@@ -252,7 +252,7 @@ const handleLogout = () => {
 .nav-links-desktop {
   display: none;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 16px;
   border: 1px solid var(--panel-border);
@@ -279,7 +279,7 @@ const handleLogout = () => {
 
 .nav-link:hover {
   color: var(--text-main);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .nav-link.active {
@@ -321,7 +321,7 @@ const handleLogout = () => {
 }
 
 .nav-btn-outline:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   border-color: var(--green);
 }
 
@@ -355,7 +355,7 @@ const handleLogout = () => {
   align-items: center;
   gap: 8px;
   padding: 4px 8px 4px 4px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   border-radius: 16px;
   cursor: pointer;
@@ -363,7 +363,7 @@ const handleLogout = () => {
 }
 
 .user-avatar:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-active);
   border-color: var(--green);
 }
 
@@ -448,7 +448,7 @@ const handleLogout = () => {
 }
 
 .dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
 }
 
 .dropdown-item.logout {
@@ -460,7 +460,7 @@ const handleLogout = () => {
 }
 
 .theme-toggle-btn {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-muted);
   cursor: pointer;
@@ -473,13 +473,13 @@ const handleLogout = () => {
 }
 
 .theme-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-active);
   color: var(--text-main);
 }
 
 .mobile-menu-toggle {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-main);
   cursor: pointer;
@@ -556,7 +556,7 @@ const handleLogout = () => {
 }
 
 .glass {
-  background: rgba(18, 18, 18, 0.85);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }

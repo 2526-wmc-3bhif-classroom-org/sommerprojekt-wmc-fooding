@@ -200,7 +200,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border-radius: 12px;
   border: 1px solid var(--panel-border);
 }

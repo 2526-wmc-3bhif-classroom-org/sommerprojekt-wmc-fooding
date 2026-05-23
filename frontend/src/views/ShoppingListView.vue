@@ -34,6 +34,10 @@ const showAddPanel = ref(false)
 const items = ref<ShoppingListItem[]>([])
 const editingItem = ref<ShoppingListItem | null>(null)
 
+// Expiration date input per item (keyed by shopping_item_id)
+const pendingExpiration = ref<Record<number, string | null>>({})
+const confirmingItemId = ref<number | null>(null)
+
 const formData = ref({
   name: '',
   quantity: 1,
@@ -68,24 +72,53 @@ const getEmoji = (category?: string) => {
   return map[category || ''] || '📦'
 }
 
-const toggleCheck = async (item: ShoppingListItem) => {
+const startCheck = (item: ShoppingListItem) => {
+  if (item.checked) {
+    // Uncheck directly, no expiration needed
+    toggleCheck(item, null)
+    return
+  }
+  confirmingItemId.value = item.shopping_item_id!
+  pendingExpiration.value[item.shopping_item_id!] = ''
+}
+
+const confirmCheck = async (item: ShoppingListItem) => {
+  const dateVal = pendingExpiration.value[item.shopping_item_id!]
+  await toggleCheck(item, dateVal || null)
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const setNoExpiration = async (item: ShoppingListItem) => {
+  const twoYears = new Date()
+  twoYears.setFullYear(twoYears.getFullYear() + 2)
+  await toggleCheck(item, twoYears.toISOString().split('T')[0])
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const cancelCheck = (item: ShoppingListItem) => {
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const toggleCheck = async (item: ShoppingListItem, expirationDate: string | null) => {
   const newChecked = !item.checked
   const oldChecked = item.checked
   item.checked = newChecked ? 1 : 0
-  
+
   try {
     await shoppingListService.setChecked(item.shopping_item_id!, newChecked)
-    
+
     // AUTO-TRANSFER TO INVENTORY
     if (newChecked) {
-      // Find the item in our list to get product_id
+      const expDate = expirationDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       await inventoryService.addItem({
         product_id: item.product_id!,
         quantity: item.quantity,
         location: 'Kühlschrank',
-        expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!
+        expiration_date: expDate
       })
-      console.log(`Automated transfer: ${item.product_name} added to inventory.`)
     }
   } catch (error) {
     item.checked = oldChecked
@@ -189,21 +222,21 @@ onMounted(loadData)
     </div>
 
     <div v-else class="items-list">
-      <UiCard 
-        v-for="item in filteredItems" 
+      <UiCard
+        v-for="item in filteredItems"
         :key="item.shopping_item_id"
         class="shopping-card"
         :class="{ checked: !!item.checked }"
         :padding="'16px 24px'"
       >
         <div class="card-content">
-          <button class="check-toggle" @click="toggleCheck(item)">
+          <button class="check-toggle" @click="startCheck(item)">
             <CheckCircle2 v-if="item.checked" class="icon-checked" />
             <Circle v-else class="icon-unchecked" />
           </button>
-          
+
           <div class="item-visual">{{ getEmoji(item.category) }}</div>
-          
+
           <div class="item-details">
             <h3 class="item-name">{{ item.product_name }}</h3>
             <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.category || 'Allgemein' }}</p>
@@ -215,6 +248,20 @@ onMounted(loadData)
               <Trash2 :size="18" />
             </button>
           </div>
+        </div>
+
+        <!-- Expiration date confirmation row -->
+        <div v-if="confirmingItemId === item.shopping_item_id" class="expiration-row">
+          <Calendar :size="16" class="exp-icon" />
+          <input
+            v-model="pendingExpiration[item.shopping_item_id!]"
+            type="date"
+            class="date-input"
+            :min="new Date().toISOString().split('T')[0]"
+          />
+          <button class="no-expiry-btn" @click="setNoExpiration(item)">Kein Ablauf</button>
+          <button class="confirm-btn" @click="confirmCheck(item)">✓</button>
+          <button class="cancel-btn" @click="cancelCheck(item)">✕</button>
         </div>
       </UiCard>
     </div>
@@ -282,7 +329,7 @@ onMounted(loadData)
 
 .filter-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 16px;
   border: 1px solid var(--panel-border);
@@ -348,7 +395,7 @@ onMounted(loadData)
 .flex-1 { flex: 1; }
 
 .modern-select {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--select-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 14px;
@@ -360,25 +407,25 @@ onMounted(loadData)
   font-weight: 500;
   transition: all 0.2s;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 18px;
 }
 
 .modern-select:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--surface-hover);
   border-color: var(--green);
 }
 
 .modern-select:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
 }
 
 .modern-select option {
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--select-option-bg);
+  color: var(--select-option-color);
   padding: 10px;
 }
 
@@ -387,7 +434,7 @@ onMounted(loadData)
 .ui-label { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; display: block; }
 
 .loader { display: flex; justify-content: center; padding: 100px; }
-.spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }

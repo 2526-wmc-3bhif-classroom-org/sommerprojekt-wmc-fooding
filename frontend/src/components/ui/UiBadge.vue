@@ -36,7 +36,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .neutral {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-hover);
   color: var(--text-muted);
   border-color: var(--panel-border);
 }
