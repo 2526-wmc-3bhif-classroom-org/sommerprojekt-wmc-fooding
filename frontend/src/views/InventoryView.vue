@@ -303,14 +303,17 @@ onMounted(loadData)
                 <button @click="changeQuantity(item, 1)"><Plus :size="16" /></button>
               </div>
               <div class="tool-actions">
+                <button class="edit-btn" @click="openEditModal(item)" title="Ablaufdatum bearbeiten">
+                  <Edit2 :size="16" />
+                </button>
                 <button class="upload-btn" @click="triggerFileInput(item.inventory_id!)">
                   <Camera :size="16" />
                 </button>
-                <input 
+                <input
                   :id="`fileInput-${item.inventory_id}`"
-                  type="file" 
-                  accept="image/*" 
-                  style="display: none" 
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
                   @change="(e) => handleFileUpload(item, e)"
                 />
                 <button class="delete-btn" @click="deleteItem(item)">
