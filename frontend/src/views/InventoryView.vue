@@ -154,6 +154,58 @@ const handleFileUpload = (item: InventoryItem, event: Event) => {
   }
 }
 
+const openEditModal = (item: InventoryItem) => {
+  editItem.value = { ...item }
+  editDate.value = item.expiration_date ? item.expiration_date.substring(0, 10) : ''
+  scanError.value = ''
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editItem.value = null
+  editDate.value = ''
+  scanError.value = ''
+}
+
+const saveEditModal = async () => {
+  if (!editItem.value) return
+  isSaving.value = true
+  try {
+    await inventoryService.updateItem(editItem.value.inventory_id!, {
+      expiration_date: editDate.value
+    })
+    const idx = items.value.findIndex(i => i.inventory_id === editItem.value!.inventory_id)
+    if (idx !== -1) items.value[idx].expiration_date = editDate.value
+    closeEditModal()
+  } catch (e: any) {
+    scanError.value = e.message || 'Fehler beim Speichern'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const scanExpiryDate = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  isScanning.value = true
+  scanError.value = ''
+  try {
+    const base64 = await fileToBase64(file)
+    const date = await extractExpiryDate(base64)
+    if (date) {
+      editDate.value = date
+    } else {
+      scanError.value = 'Kein Datum gefunden. Bitte manuell eingeben.'
+    }
+  } catch (e: any) {
+    scanError.value = e.message || 'Scan fehlgeschlagen'
+  } finally {
+    isScanning.value = false
+    ;(event.target as HTMLInputElement).value = ''
+  }
+}
+
 onMounted(loadData)
 </script>
 
