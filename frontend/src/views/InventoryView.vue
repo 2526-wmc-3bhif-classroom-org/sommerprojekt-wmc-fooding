@@ -351,7 +351,6 @@ onMounted(loadData)
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
                 style="display: none"
                 @change="scanExpiryDate"
               />
