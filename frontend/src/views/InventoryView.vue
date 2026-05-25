@@ -176,7 +176,8 @@ const saveEditModal = async () => {
       expiration_date: editDate.value
     })
     const idx = items.value.findIndex(i => i.inventory_id === editItem.value!.inventory_id)
-    if (idx !== -1) items.value[idx].expiration_date = editDate.value
+    const found = items.value[idx]
+    if (idx !== -1 && found) found.expiration_date = editDate.value
     closeEditModal()
   } catch (e: any) {
     scanError.value = e.message || 'Fehler beim Speichern'
