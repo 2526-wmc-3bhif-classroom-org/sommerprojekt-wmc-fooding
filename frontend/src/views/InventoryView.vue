@@ -326,6 +326,55 @@ onMounted(loadData)
       </main>
     </div>
   </div>
+
+  <!-- Edit Expiry Date Modal -->
+  <Teleport to="body">
+    <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Ablaufdatum bearbeiten</h2>
+          <button class="modal-close" @click="closeEditModal"><X :size="20" /></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-product-name">{{ editItem?.product_name }}</p>
+
+          <label class="modal-label">Ablaufdatum</label>
+          <div class="date-row">
+            <input
+              v-model="editDate"
+              type="date"
+              class="date-input"
+            />
+            <label class="scan-btn" title="Foto aufnehmen">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style="display: none"
+                @change="scanExpiryDate"
+              />
+              <ScanLine v-if="!isScanning" :size="18" />
+              <span v-else class="scan-spinner"></span>
+              {{ isScanning ? 'Scannt...' : 'Scannen' }}
+            </label>
+          </div>
+
+          <p v-if="scanError" class="scan-error">{{ scanError }}</p>
+          <p v-if="editDate && !isScanning && !scanError" class="scan-success">
+            Datum: {{ editDate }}
+          </p>
+        </div>
+
+        <div class="modal-footer">
+          <UiButton variant="secondary" @click="closeEditModal">Abbrechen</UiButton>
+          <UiButton :disabled="!editDate || isSaving" @click="saveEditModal">
+            {{ isSaving ? 'Speichert...' : 'Speichern' }}
+          </UiButton>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
