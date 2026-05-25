@@ -578,4 +578,35 @@ onMounted(loadData)
   justify-content: center;
   z-index: 1000;
 }
+
+.modal {
+  background: var(--panel-bg, #1a1a2e);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 { font-size: 1.3rem; font-weight: 700; margin: 0; }
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.modal-close:hover { color: var(--text-main); }
 </style>
