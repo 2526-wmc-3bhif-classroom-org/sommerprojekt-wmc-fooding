@@ -646,4 +646,43 @@ onMounted(loadData)
 }
 
 .date-input:focus { border-color: var(--green); }
+
+.scan-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.scan-btn:hover { opacity: 0.85; }
+
+.scan-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.scan-error { color: #ef4444; font-size: 0.9rem; margin: 0; }
+.scan-success { color: var(--green); font-size: 0.9rem; margin: 0; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-border);
+}
 </style>
