@@ -3,22 +3,25 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { inventoryService, type InventoryItem } from '@/services/inventory'
 import { productService, type Product } from '@/services/product'
+import { extractExpiryDate, fileToBase64 } from '@/services/gemini'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import { 
-  Search, 
-  Trash2, 
-  Edit2, 
-  Minus, 
-  Calendar, 
-  Package, 
-  Grid, 
+import {
+  Search,
+  Trash2,
+  Edit2,
+  Minus,
+  Calendar,
+  Package,
+  Grid,
   List,
   Plus,
   ArrowRight,
-  Camera
+  Camera,
+  ScanLine,
+  X
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -30,6 +33,14 @@ const searchQuery = ref('')
 const categoryFilter = ref('')
 const sortBy = ref('date')
 const isLoading = ref(true)
+
+// Edit Modal State
+const showEditModal = ref(false)
+const editItem = ref<InventoryItem | null>(null)
+const editDate = ref('')
+const isSaving = ref(false)
+const isScanning = ref(false)
+const scanError = ref('')
 
 // Data State
 const items = ref<InventoryItem[]>([])
