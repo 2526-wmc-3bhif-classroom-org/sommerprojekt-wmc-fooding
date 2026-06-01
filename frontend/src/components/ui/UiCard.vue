@@ -39,7 +39,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .hoverable:hover {
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   border-color: var(--blue);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
