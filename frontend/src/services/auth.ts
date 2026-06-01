@@ -126,6 +126,12 @@ class AuthService {
   getToken(): string | null {
     return this._token.value
   }
+
+  handleUnauthorized(): never {
+    this.logout()
+    window.location.href = '/login'
+    throw new Error('Session abgelaufen. Bitte erneut anmelden.')
+  }
 }
 
 export const authService = new AuthService()

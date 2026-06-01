@@ -92,7 +92,7 @@ const confirmCheck = async (item: ShoppingListItem) => {
 const setNoExpiration = async (item: ShoppingListItem) => {
   const twoYears = new Date()
   twoYears.setFullYear(twoYears.getFullYear() + 2)
-  await toggleCheck(item, twoYears.toISOString().split('T')[0])
+  await toggleCheck(item, twoYears.toISOString().split('T')[0] ?? null)
   confirmingItemId.value = null
   delete pendingExpiration.value[item.shopping_item_id!]
 }
