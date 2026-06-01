@@ -7,13 +7,16 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 const isReceded = ref(false)
 
+
+// wenn  die route gewechselt wird neuer wert durch berechnet, wenn es login ist ist showNavbar dann false
 const showNavbar = computed(() => route.name !== 'login')
 
-// Provide a way for child components to control navbar state
+// dafür da um navbar auszublenden wenn man sie nicht braucht
 const setNavbarRecede = (state: boolean) => {
   isReceded.value = state
 }
 
+// damit man kann man die Funktion unter dem Namen navbarControll speichern,const navbarControl = inject('navbarControl')
 provide('navbarControl', { setNavbarRecede })
 </script>
 
@@ -28,7 +31,7 @@ provide('navbarControl', { setNavbarRecede })
     <div class="fruit fruit-melon"></div>
 
     <Navbar v-if="showNavbar" :recede="isReceded" />
-    
+
     <main class="main-content">
       <slot></slot>
     </main>
