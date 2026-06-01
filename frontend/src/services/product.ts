@@ -47,6 +47,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to create product')
     }
@@ -61,6 +62,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to fetch products')
     }
@@ -76,6 +78,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to fetch product')
     }
@@ -92,6 +95,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to update product')
     }
@@ -106,6 +110,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to delete product')
     }

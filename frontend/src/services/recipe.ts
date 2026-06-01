@@ -30,19 +30,28 @@ function authHeaders(): HeadersInit {
 export const recipeService = {
   async getRecipes(): Promise<Recipe[]> {
     const response = await fetch(API_URL, { headers: authHeaders() })
-    if (!response.ok) throw new Error('Fehler beim Laden der Rezepte')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Laden der Rezepte')
+    }
     return response.json()
   },
 
   async getRecipeById(id: number): Promise<RecipeWithIngredients> {
     const response = await fetch(`${API_URL}/${id}`, { headers: authHeaders() })
-    if (!response.ok) throw new Error('Fehler beim Laden des Rezepts')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Laden des Rezepts')
+    }
     return response.json()
   },
 
   async getSuggestions(): Promise<RecipeWithIngredients[]> {
     const response = await fetch(`${API_URL}/suggestions`, { headers: authHeaders() })
-    if (!response.ok) throw new Error('Fehler beim Laden der Vorschläge')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Laden der Vorschläge')
+    }
     return response.json()
   },
 
@@ -57,6 +66,7 @@ export const recipeService = {
       body: JSON.stringify({ title, instructions, ingredients })
     })
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const err = await response.json().catch(() => ({}))
       throw new Error(err.message || 'Fehler beim Erstellen')
     }
@@ -69,7 +79,10 @@ export const recipeService = {
       headers: authHeaders(),
       body: JSON.stringify(data)
     })
-    if (!response.ok) throw new Error('Fehler beim Aktualisieren')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Aktualisieren')
+    }
   },
 
   async deleteRecipe(id: number): Promise<void> {
@@ -77,7 +90,10 @@ export const recipeService = {
       method: 'DELETE',
       headers: authHeaders()
     })
-    if (!response.ok) throw new Error('Fehler beim Löschen')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Löschen')
+    }
   },
 
   async addMissingToShoppingList(id: number): Promise<void> {
@@ -85,6 +101,9 @@ export const recipeService = {
       method: 'POST',
       headers: authHeaders()
     })
-    if (!response.ok) throw new Error('Fehler beim Hinzufügen zur Einkaufsliste')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Hinzufügen zur Einkaufsliste')
+    }
   }
 }
