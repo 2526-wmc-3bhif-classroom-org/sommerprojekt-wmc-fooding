@@ -20,7 +20,7 @@ withDefaults(defineProps<Props>(), {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 99px;
   font-size: 0.8rem;
   font-weight: 700;
