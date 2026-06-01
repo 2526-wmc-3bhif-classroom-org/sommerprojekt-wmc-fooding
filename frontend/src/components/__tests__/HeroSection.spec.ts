@@ -10,21 +10,23 @@ vi.mock('@/services/auth', () => ({
   }
 }))
 
-const makeDate = (daysFromNow: number) => {
-  const d = new Date()
-  d.setDate(d.getDate() + daysFromNow)
-  return d.toISOString().split('T')[0]
-}
-
-vi.mock('@/services/inventory', () => ({
-  inventoryService: {
-    getInventory: vi.fn().mockResolvedValueOnce([
-      { inventory_id: 1, product_id: 1, quantity: 1, expiration_date: makeDate(2) }, // expiring within 3 days
-      { inventory_id: 2, product_id: 2, quantity: 1, expiration_date: makeDate(10) }, // fresh
-      { inventory_id: 3, product_id: 3, quantity: 1, expiration_date: makeDate(15) } // fresh
-    ])
+vi.mock('@/services/inventory', () => {
+  const makeDateLocal = (daysFromNow: number) => {
+    const d = new Date()
+    d.setDate(d.getDate() + daysFromNow)
+    return d.toISOString().split('T')[0]
   }
-}))
+
+  return {
+    inventoryService: {
+      getInventory: vi.fn().mockResolvedValueOnce([
+        { inventory_id: 1, product_id: 1, quantity: 1, expiration_date: makeDateLocal(2) }, // expiring within 3 days
+        { inventory_id: 2, product_id: 2, quantity: 1, expiration_date: makeDateLocal(10) }, // fresh
+        { inventory_id: 3, product_id: 3, quantity: 1, expiration_date: makeDateLocal(15) } // fresh
+      ])
+    }
+  }
+})
 
 import HeroSection from '../HeroSection.vue'
 import { nextTick } from 'vue'
