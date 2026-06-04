@@ -67,4 +67,14 @@ export class ShoppingListItemService {
             return { success: false, message: "Failed to delete item" };
         }
     }
+
+    public static deleteCheckedItems(userId: number): { success: boolean; message?: string } {
+        try {
+            ShoppingListItemRepository.deleteChecked(userId);
+            return { success: true };
+        } catch (error) {
+            console.error("Error deleting checked shopping list items:", error);
+            return { success: false, message: "Failed to delete checked items" };
+        }
+    }
 }
