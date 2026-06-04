@@ -168,6 +168,16 @@ const deleteItem = async (item: ShoppingListItem) => {
   } catch (e) {}
 }
 
+const clearDoneItems = async () => {
+  if (!confirm('Alle erledigten Artikel löschen?')) return
+  try {
+    await shoppingListService.deleteCheckedItems()
+    await loadData()
+  } catch (e) {
+    alert('Fehler beim Löschen der erledigten Artikel')
+  }
+}
+
 const filteredItems = computed(() => {
   let result = items.value
   if (activeFilter.value === 'open') result = result.filter(i => !i.checked)
@@ -208,6 +218,9 @@ onMounted(loadData)
           {{ f === 'all' ? 'Alle' : f === 'open' ? 'Offen' : 'Erledigt' }}
         </button>
       </div>
+      <UiButton v-if="activeFilter === 'done' && items.filter(i => !!i.checked).length > 0" variant="secondary" @click="clearDoneItems">
+        Liste leeren
+      </UiButton>
       <UiInput v-model="searchQuery" placeholder="Suchen..." :icon="Search" class="search-input" />
     </div>
 
