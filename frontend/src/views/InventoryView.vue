@@ -8,6 +8,8 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import {
   Search,
   Trash2,
@@ -21,10 +23,13 @@ import {
   ArrowRight,
   Camera,
   ScanLine,
-  X
+  X,
+  ShoppingCart
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const { show: showToast } = useToast()
+const { confirm } = useConfirm()
 
 // UI State
 const activeFilter = ref('all')
@@ -125,11 +130,14 @@ const changeQuantity = async (item: InventoryItem, delta: number) => {
 }
 
 const deleteItem = async (item: InventoryItem) => {
-  if (!confirm(`"${item.product_name}" löschen?`)) return
+  const ok = await confirm(`"${item.product_name}" löschen?`)
+  if (!ok) return
   try {
     await inventoryService.deleteItem(item.inventory_id!)
     items.value = items.value.filter(i => i.inventory_id !== item.inventory_id)
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Löschen', 'error')
+  }
 }
 
 const uploadImage = async (item: InventoryItem, file: File) => {
@@ -137,7 +145,7 @@ const uploadImage = async (item: InventoryItem, file: File) => {
     const imageUrl = await inventoryService.uploadImage(item.inventory_id!, file)
     item.image = imageUrl
   } catch (e) {
-    alert('Fehler beim Hochladen des Bildes')
+    showToast('Fehler beim Hochladen des Bildes', 'error')
   }
 }
 
@@ -275,11 +283,12 @@ onMounted(loadData)
         </div>
 
         <div v-else :class="['items-container', viewMode]">
-          <UiCard 
-            v-for="item in filteredItems" 
+          <UiCard
+            v-for="item in filteredItems"
             :key="item.inventory_id"
             hoverable
             class="item-card"
+            :class="`expiry-${getStatus(item.expiration_date).variant === 'success' ? 'ok' : getStatus(item.expiration_date).variant === 'warning' ? 'soon' : 'danger'}`"
             :padding="'20px'"
           >
             <div class="item-header">
@@ -326,55 +335,55 @@ onMounted(loadData)
         </div>
       </main>
     </div>
-  </div>
 
-  <!-- Edit Expiry Date Modal -->
-  <Teleport to="body">
-    <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-      <div class="modal">
-        <div class="modal-header">
-          <h2>Ablaufdatum bearbeiten</h2>
-          <button class="modal-close" @click="closeEditModal"><X :size="20" /></button>
-        </div>
-
-        <div class="modal-body">
-          <p class="modal-product-name">{{ editItem?.product_name }}</p>
-
-          <label class="modal-label">Ablaufdatum</label>
-          <div class="date-row">
-            <input
-              v-model="editDate"
-              type="date"
-              class="date-input"
-            />
-            <label class="scan-btn" title="Foto aufnehmen">
-              <input
-                type="file"
-                accept="image/*"
-                style="display: none"
-                @change="scanExpiryDate"
-              />
-              <ScanLine v-if="!isScanning" :size="18" />
-              <span v-else class="scan-spinner"></span>
-              {{ isScanning ? 'Scannt...' : 'Scannen' }}
-            </label>
+    <!-- Edit Expiry Date Modal -->
+    <Teleport to="body">
+      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Ablaufdatum bearbeiten</h2>
+            <button class="modal-close" @click="closeEditModal"><X :size="20" /></button>
           </div>
 
-          <p v-if="scanError" class="scan-error">{{ scanError }}</p>
-          <p v-if="editDate && !isScanning && !scanError" class="scan-success">
-            Datum: {{ editDate }}
-          </p>
-        </div>
+          <div class="modal-body">
+            <p class="modal-product-name">{{ editItem?.product_name }}</p>
 
-        <div class="modal-footer">
-          <UiButton variant="secondary" @click="closeEditModal">Abbrechen</UiButton>
-          <UiButton :disabled="!editDate || isSaving" @click="saveEditModal">
-            {{ isSaving ? 'Speichert...' : 'Speichern' }}
-          </UiButton>
+            <label class="modal-label">Ablaufdatum</label>
+            <div class="date-row">
+              <input
+                v-model="editDate"
+                type="date"
+                class="date-input"
+              />
+              <label class="scan-btn" title="Foto aufnehmen">
+                <input
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
+                  @change="scanExpiryDate"
+                />
+                <ScanLine v-if="!isScanning" :size="18" />
+                <span v-else class="scan-spinner"></span>
+                {{ isScanning ? 'Scannt...' : 'Scannen' }}
+              </label>
+            </div>
+
+            <p v-if="scanError" class="scan-error">{{ scanError }}</p>
+            <p v-if="editDate && !isScanning && !scanError" class="scan-success">
+              Datum: {{ editDate }}
+            </p>
+          </div>
+
+          <div class="modal-footer">
+            <UiButton variant="secondary" @click="closeEditModal">Abbrechen</UiButton>
+            <UiButton :disabled="!editDate || isSaving" @click="saveEditModal">
+              {{ isSaving ? 'Speichert...' : 'Speichern' }}
+            </UiButton>
+          </div>
         </div>
       </div>
-    </div>
-  </Teleport>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>
@@ -490,7 +499,10 @@ onMounted(loadData)
   gap: 24px;
 }
 
-.item-card { display: flex; flex-direction: column; gap: 20px; }
+.item-card { display: flex; flex-direction: column; gap: 20px; border-left: 3px solid transparent; }
+.item-card.expiry-ok { border-left-color: #10b981; }
+.item-card.expiry-soon { border-left-color: #f59e0b; }
+.item-card.expiry-danger { border-left-color: #ef4444; }
 
 .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
 .item-visual { font-size: 2.5rem; background: var(--surface-hover); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
