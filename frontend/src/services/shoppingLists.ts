@@ -84,6 +84,17 @@ export const shoppingListService = {
     }
   },
 
+  async deleteCheckedItems(): Promise<void> {
+    const response = await fetch(`${API_URL}/checked`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    })
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Löschen der erledigten Artikel')
+    }
+  },
+
   // Mithilfe von KI
   async findOrCreateProduct(name: string, unit: string, category: string): Promise<number> {
     const products = await productService.getProducts()
