@@ -1,36 +1,38 @@
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-
-const API_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 
 export async function extractExpiryDate(imageBase64: string): Promise<string | null> {
-  const response = await fetch(API_URL, {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${OPENAI_API_KEY}`
+    },
     body: JSON.stringify({
-      contents: [{
-        parts: [
+      model: 'gpt-4o-mini',
+      messages: [{
+        role: 'user',
+        content: [
           {
-            inline_data: {
-              mime_type: 'image/jpeg',
-              data: imageBase64
-            }
+            type: 'image_url',
+            image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
           },
           {
+            type: 'text',
             text: 'Find the expiration date or best-before date in this image. Return ONLY the date in YYYY-MM-DD format. If multiple dates exist, return the one that is most likely the expiration date. If no date is found, return the word null.'
           }
         ]
-      }]
+      }],
+      max_tokens: 50
     })
   })
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || 'Gemini API Fehler')
+    throw new Error(err.error?.message || 'OpenAI API Fehler')
   }
 
   const data = await response.json()
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+  const text: string = data.choices?.[0]?.message?.content?.trim() ?? ''
 
   if (!text || text === 'null') return null
 
