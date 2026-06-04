@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, inject, watch } from 'vue'
+import { ref, onMounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { shoppingListService, type ShoppingListItem } from '@/services/shoppingLists'
 import { inventoryService } from '@/services/inventory'
@@ -7,26 +7,27 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import { 
-  Search, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  Minus, 
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import {
+  Search,
+  Plus,
+  Trash2,
+  Minus,
   ShoppingCart,
   CheckCircle2,
   Circle,
-  Package,
-  ArrowRight
+  Calendar
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const navbarControl = inject<{ setNavbarRecede: (state: boolean) => void }>('navbarControl')
+const { show: showToast } = useToast()
+const { confirm } = useConfirm()
 
 // UI State
 const activeFilter = ref<'all' | 'open' | 'done'>('all')
 const searchQuery = ref('')
-const categoryFilter = ref('')
 const isLoading = ref(true)
 const isSaving = ref(false)
 const showAddPanel = ref(false)
@@ -34,7 +35,6 @@ const showAddPanel = ref(false)
 const items = ref<ShoppingListItem[]>([])
 const editingItem = ref<ShoppingListItem | null>(null)
 
-// Expiration date input per item (keyed by shopping_item_id)
 const pendingExpiration = ref<Record<number, string | null>>({})
 const confirmingItemId = ref<number | null>(null)
 
@@ -72,9 +72,12 @@ const getEmoji = (category?: string) => {
   return map[category || ''] || '📦'
 }
 
+const allCount = computed(() => items.value.length)
+const openCount = computed(() => items.value.filter(i => !i.checked).length)
+const doneCount = computed(() => items.value.filter(i => !!i.checked).length)
+
 const startCheck = (item: ShoppingListItem) => {
   if (item.checked) {
-    // Uncheck directly, no expiration needed
     toggleCheck(item, null)
     return
   }
@@ -110,7 +113,6 @@ const toggleCheck = async (item: ShoppingListItem, expirationDate: string | null
   try {
     await shoppingListService.setChecked(item.shopping_item_id!, newChecked)
 
-    // AUTO-TRANSFER TO INVENTORY
     if (newChecked) {
       const expDate = expirationDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       await inventoryService.addItem({
@@ -122,7 +124,7 @@ const toggleCheck = async (item: ShoppingListItem, expirationDate: string | null
     }
   } catch (error) {
     item.checked = oldChecked
-    alert('Fehler beim Aktualisieren.')
+    showToast('Fehler beim Aktualisieren.', 'error')
   }
 }
 
@@ -154,27 +156,70 @@ const saveItem = async () => {
     await loadData()
     closePanel()
   } catch (e) {
-    alert('Fehler beim Speichern')
+    showToast('Fehler beim Speichern', 'error')
   } finally {
     isSaving.value = false
   }
 }
 
 const deleteItem = async (item: ShoppingListItem) => {
-  if (!confirm(`"${item.product_name}" löschen?`)) return
+  const ok = await confirm(`"${item.product_name}" löschen?`)
+  if (!ok) return
   try {
     await shoppingListService.deleteItem(item.shopping_item_id!)
     items.value = items.value.filter(i => i.shopping_item_id !== item.shopping_item_id)
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Löschen', 'error')
+  }
+}
+
+const changeQuantity = async (item: ShoppingListItem, delta: number) => {
+  const newQty = item.quantity + delta
+  if (newQty < 1) {
+    deleteItem(item)
+    return
+  }
+  try {
+    await shoppingListService.updateQuantity(item.shopping_item_id!, newQty)
+    item.quantity = newQty
+  } catch (e) {
+    showToast('Fehler beim Aktualisieren der Menge', 'error')
+  }
 }
 
 const clearDoneItems = async () => {
-  if (!confirm('Alle erledigten Artikel löschen?')) return
+  const ok = await confirm('Alle erledigten Artikel löschen?')
+  if (!ok) return
+
+  const deleted = items.value.filter(i => !!i.checked)
   try {
     await shoppingListService.deleteCheckedItems()
-    await loadData()
+    items.value = items.value.filter(i => !i.checked)
+
+    let undone = false
+    const toastId = showToast(
+      `${deleted.length} Artikel gelöscht`,
+      'info',
+      {
+        timeout: 5000,
+        action: {
+          label: 'Rückgängig',
+          handler: async () => {
+            undone = true
+            try {
+              await Promise.all(
+                deleted.map(item => shoppingListService.addItem({ product_id: item.product_id!, quantity: item.quantity }))
+              )
+              await loadData()
+            } catch (e) {
+              showToast('Wiederherstellen fehlgeschlagen', 'error')
+            }
+          }
+        }
+      }
+    )
   } catch (e) {
-    alert('Fehler beim Löschen der erledigten Artikel')
+    showToast('Fehler beim Löschen der erledigten Artikel', 'error')
   }
 }
 
@@ -182,7 +227,7 @@ const filteredItems = computed(() => {
   let result = items.value
   if (activeFilter.value === 'open') result = result.filter(i => !i.checked)
   else if (activeFilter.value === 'done') result = result.filter(i => !!i.checked)
-  
+
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(i => i.product_name?.toLowerCase().includes(q))
@@ -208,14 +253,14 @@ onMounted(loadData)
 
     <div class="list-controls">
       <div class="filter-tabs">
-        <button 
-          v-for="f in (['all', 'open', 'done'] as const)" 
+        <button
+          v-for="f in (['all', 'open', 'done'] as const)"
           :key="f"
           class="tab-btn"
           :class="{ active: activeFilter === f }"
           @click="activeFilter = f"
         >
-          {{ f === 'all' ? 'Alle' : f === 'open' ? 'Offen' : 'Erledigt' }}
+          {{ f === 'all' ? `Alle (${allCount})` : f === 'open' ? `Offen (${openCount})` : `Erledigt (${doneCount})` }}
         </button>
       </div>
       <UiButton v-if="activeFilter === 'done' && items.filter(i => !!i.checked).length > 0" variant="secondary" @click="clearDoneItems">
@@ -252,11 +297,16 @@ onMounted(loadData)
 
           <div class="item-details">
             <h3 class="item-name">{{ item.product_name }}</h3>
-            <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.category || 'Allgemein' }}</p>
+            <p class="item-meta">{{ item.category || 'Allgemein' }}</p>
           </div>
 
           <div class="actions">
             <UiBadge v-if="item.checked" variant="success">Erledigt & Im Inventar</UiBadge>
+            <div v-if="!item.checked" class="qty-controls">
+              <button class="qty-btn" @click.stop="changeQuantity(item, -1)"><Minus :size="14" /></button>
+              <span class="qty-value">{{ item.quantity }} {{ item.default_unit }}</span>
+              <button class="qty-btn" @click.stop="changeQuantity(item, 1)">+</button>
+            </div>
             <button class="delete-btn" @click="deleteItem(item)">
               <Trash2 :size="18" />
             </button>
@@ -395,6 +445,24 @@ onMounted(loadData)
 .actions { display: flex; align-items: center; gap: 16px; }
 .delete-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
 .delete-btn:hover { color: #ef4444; }
+
+.qty-controls { display: flex; align-items: center; gap: 6px; }
+.qty-btn {
+  background: var(--surface-hover);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.qty-btn:hover { background: var(--surface-active); }
+.qty-value { font-size: 0.85rem; font-weight: 600; min-width: 52px; text-align: center; color: var(--text-muted); }
 
 .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); z-index: 2000; display: flex; justify-content: flex-end; }
 .panel { width: 100%; max-width: 500px; height: 100%; }
