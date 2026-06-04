@@ -61,4 +61,12 @@ export class ShoppingListItemRepository {
         `).run(shopping_item_id, userId);
         return result.changes > 0;
     }
+
+    public static deleteChecked(userId: number): boolean {
+        const result = this.db.prepare(`
+            DELETE FROM shopping_list_items
+            WHERE user_id = ? AND checked = 1
+        `).run(userId);
+        return result.changes >= 0;
+    }
 }
