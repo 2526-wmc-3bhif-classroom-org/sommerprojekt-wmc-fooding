@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Navbar from '@/components/Navbar.vue'
+import ToastContainer from '@/components/ui/ToastContainer.vue'
+import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 import { themeStore } from '@/store/theme'
 import { ref, provide, computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -35,6 +37,9 @@ provide('navbarControl', { setNavbarRecede })
     <main class="main-content">
       <slot></slot>
     </main>
+
+    <ToastContainer />
+    <ConfirmDialog />
   </div>
 </template>
 
