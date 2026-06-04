@@ -12,8 +12,8 @@
 
 ## 3. Replace alert/confirm in InventoryView
 
-- [ ] 3.1 Replace `alert()` calls with error toasts in `InventoryView.vue`
-- [ ] 3.2 Replace `confirm()` calls with `ConfirmDialog` in `InventoryView.vue`
+- [x] 3.1 Replace `alert()` calls with error toasts in `InventoryView.vue`
+- [x] 3.2 Replace `confirm()` calls with `ConfirmDialog` in `InventoryView.vue`
 
 ## 4. Shopping List Filter Counts
 
@@ -22,8 +22,8 @@
 
 ## 5. Inventory Expiry Border
 
-- [ ] 5.1 Add CSS classes `expiry-ok`, `expiry-soon`, `expiry-danger` to `.item-card` in `InventoryView.vue`
-- [ ] 5.2 Add left-border styles for each class in `InventoryView.vue` `<style>`
+- [x] 5.1 Add CSS classes `expiry-ok`, `expiry-soon`, `expiry-danger` to `.item-card` in `InventoryView.vue`
+- [x] 5.2 Add left-border styles for each class in `InventoryView.vue` `<style>`
 
 ## 6. Undo After Liste Leeren
 
