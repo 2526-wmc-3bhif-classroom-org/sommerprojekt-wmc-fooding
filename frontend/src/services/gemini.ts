@@ -1,5 +1,15 @@
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
 
+function getDietPrefs(): string {
+  try {
+    const stored = localStorage.getItem('fooding_diet_prefs')
+    const prefs: string[] = stored ? JSON.parse(stored) : []
+    return prefs.length > 0 ? `\nErnährungspräferenzen des Users: ${prefs.join(', ')}. Bitte berücksichtigen.` : ''
+  } catch {
+    return ''
+  }
+}
+
 export async function extractExpiryDate(imageBase64: string): Promise<string | null> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -52,6 +62,7 @@ export async function generateRecipeSuggestions(
 ): Promise<AiRecipeSuggestion[]> {
   const inventoryList = inventoryNames.join(', ')
   const prefLine = preferences.trim() ? `\nZusätzliche Wünsche: ${preferences.trim()}` : ''
+  const dietLine = getDietPrefs()
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -63,7 +74,7 @@ export async function generateRecipeSuggestions(
       model: 'gpt-4o-mini',
       messages: [{
         role: 'user',
-        content: `Du bist ein Kochassistent. Der User hat folgende Zutaten im Vorrat: ${inventoryList}.${prefLine}\n\nSchlage 3 Rezepte vor die mit diesen Zutaten (oder einem Teil davon) gekocht werden können. Antworte NUR mit einem JSON-Array ohne Markdown:\n[\n  {\n    "title": "Rezeptname",\n    "ingredients": ["Zutat 1", "Zutat 2"],\n    "instructions": "Schritt-für-Schritt Zubereitung"\n  }\n]`
+        content: `Du bist ein Kochassistent. Der User hat folgende Zutaten im Vorrat: ${inventoryList}.${prefLine}${dietLine}\n\nSchlage 3 Rezepte vor die mit diesen Zutaten (oder einem Teil davon) gekocht werden können. Antworte NUR mit einem JSON-Array ohne Markdown:\n[\n  {\n    "title": "Rezeptname",\n    "ingredients": ["Zutat 1", "Zutat 2"],\n    "instructions": "Schritt-für-Schritt Zubereitung"\n  }\n]`
       }],
       max_tokens: 1500
     })
@@ -97,7 +108,7 @@ export async function generateRecipeWish(wish: string): Promise<RecipeWishResult
       model: 'gpt-4o-mini',
       messages: [{
         role: 'user',
-        content: `Der User möchte folgendes kochen: "${wish}"\n\nErstelle ein konkretes Rezept dazu. Antworte NUR mit JSON ohne Markdown:\n{\n  "title": "Rezeptname",\n  "instructions": "Schritt-für-Schritt Zubereitung",\n  "ingredients": [\n    { "name": "Zutat", "quantity": 200, "unit": "g", "category": "Fleisch & Fisch" }\n  ]\n}\n\nMögliche Kategorien: Obst & Gemüse, Milchprodukte, Fleisch & Fisch, Getränke, Konserven, Backwaren, Snacks, Tiefkühl. Verwende sinnvolle Mengenangaben.`
+        content: `Der User möchte folgendes kochen: "${wish}"${getDietPrefs()}\n\nErstelle ein konkretes Rezept dazu. Antworte NUR mit JSON ohne Markdown:\n{\n  "title": "Rezeptname",\n  "instructions": "Schritt-für-Schritt Zubereitung",\n  "ingredients": [\n    { "name": "Zutat", "quantity": 200, "unit": "g", "category": "Fleisch & Fisch" }\n  ]\n}\n\nMögliche Kategorien: Obst & Gemüse, Milchprodukte, Fleisch & Fisch, Getränke, Konserven, Backwaren, Snacks, Tiefkühl. Verwende sinnvolle Mengenangaben.`
       }],
       max_tokens: 1000
     })
