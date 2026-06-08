@@ -5,3 +5,4 @@ node_modules
 dist
 backend/server/data/*.db
 backend/server/src/uploads
+openspec
