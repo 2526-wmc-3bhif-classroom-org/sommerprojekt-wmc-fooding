@@ -10,7 +10,8 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import UiConfirmDialog from '@/components/ui/UiConfirmDialog.vue'
+import { useConfirm } from '@/composables/useConfirm'
+import { useToast } from '@/composables/useToast'
 import {
   Search,
   Plus,
@@ -26,6 +27,8 @@ import {
 
 const router = useRouter()
 const navbarControl = inject<{ setNavbarRecede: (state: boolean) => void }>('navbarControl')
+const { confirm } = useConfirm()
+const { show: showToast } = useToast()
 
 const activeTab = ref<'all' | 'cookable'>('all')
 const searchQuery = ref('')
@@ -340,23 +343,15 @@ const saveRecipe = async () => {
   }
 }
 
-const pendingDeleteRecipe = ref<Recipe | null>(null)
-const isDeletingRecipe = ref(false)
-
-const deleteRecipe = (recipe: Recipe) => {
-  pendingDeleteRecipe.value = recipe
-}
-
-const confirmDeleteRecipe = async () => {
-  if (!pendingDeleteRecipe.value) return
-  isDeletingRecipe.value = true
+const deleteRecipe = async (recipe: Recipe) => {
+  const ok = await confirm(`"${recipe.title}" wirklich löschen?`)
+  if (!ok) return
   try {
-    await recipeService.deleteRecipe(pendingDeleteRecipe.value.recipe_id!)
-    recipes.value = recipes.value.filter(r => r.recipe_id !== pendingDeleteRecipe.value!.recipe_id)
+    await recipeService.deleteRecipe(recipe.recipe_id!)
+    recipes.value = recipes.value.filter(r => r.recipe_id !== recipe.recipe_id)
     closeDetail()
-  } finally {
-    isDeletingRecipe.value = false
-    pendingDeleteRecipe.value = null
+  } catch {
+    showToast('Fehler beim Löschen des Rezepts', 'error')
   }
 }
 
@@ -802,14 +797,6 @@ onUnmounted(() => navbarControl?.setNavbarRecede(false))
         </div>
       </div>
     </transition>
-
-    <UiConfirmDialog
-      v-if="pendingDeleteRecipe"
-      :message="`&quot;${pendingDeleteRecipe.title}&quot; wirklich löschen?`"
-      :is-loading="isDeletingRecipe"
-      @confirm="confirmDeleteRecipe"
-      @cancel="pendingDeleteRecipe = null"
-    />
 
   </div>
 </template>
