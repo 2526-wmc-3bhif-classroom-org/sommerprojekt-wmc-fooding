@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { recipeService, type Recipe, type RecipeWithIngredients } from '@/services/recipe'
 import { productService, type Product } from '@/services/product'
+import { inventoryService } from '@/services/inventory'
+import { generateRecipeSuggestions, type AiRecipeSuggestion, generateRecipeWish, type RecipeWishResult } from '@/services/gemini'
+import { shoppingListService } from '@/services/shoppingLists'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
+import UiConfirmDialog from '@/components/ui/UiConfirmDialog.vue'
 import {
   Search,
   Plus,
@@ -16,7 +20,8 @@ import {
   ShoppingCart,
   Sparkles,
   BookOpen,
-  X
+  X,
+  Info
 } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -50,6 +55,125 @@ const ingredientDraft = ref({
 })
 
 const saveError = ref('')
+
+// AI Suggestions
+const showAiModal = ref(false)
+const aiPreferences = ref('')
+const isGenerating = ref(false)
+const aiSuggestions = ref<AiRecipeSuggestion[]>([])
+const aiError = ref('')
+const savingIndex = ref<number | null>(null)
+const savedIndices = ref<Set<number>>(new Set())
+
+const openAiModal = () => {
+  aiSuggestions.value = []
+  aiError.value = ''
+  aiPreferences.value = ''
+  savedIndices.value = new Set()
+  showAiModal.value = true
+}
+
+const closeAiModal = () => {
+  showAiModal.value = false
+}
+
+const generateSuggestions = async () => {
+  isGenerating.value = true
+  aiError.value = ''
+  aiSuggestions.value = []
+  try {
+    const inventory = await inventoryService.getInventory()
+    const names = inventory.map(i => i.product_name ?? '').filter(Boolean)
+    if (names.length === 0) {
+      aiError.value = 'Dein Inventar ist leer. Füge zuerst Produkte hinzu.'
+      return
+    }
+    aiSuggestions.value = await generateRecipeSuggestions(names, aiPreferences.value)
+  } catch (e: unknown) {
+    aiError.value = (e as Error).message || 'Fehler beim Generieren.'
+  } finally {
+    isGenerating.value = false
+  }
+}
+
+const saveAiRecipe = async (suggestion: AiRecipeSuggestion, index: number) => {
+  savingIndex.value = index
+  try {
+    await recipeService.createRecipe(suggestion.title, suggestion.instructions, [])
+    savedIndices.value = new Set([...savedIndices.value, index])
+    await loadData()
+  } catch {
+    aiError.value = 'Rezept konnte nicht gespeichert werden.'
+  } finally {
+    savingIndex.value = null
+  }
+}
+
+// Rezeptwunsch
+const showWishModal = ref(false)
+const wishInput = ref('')
+const isGeneratingWish = ref(false)
+const wishResult = ref<RecipeWishResult | null>(null)
+const wishError = ref('')
+const wishMissingIngredients = ref<RecipeWishResult['ingredients']>([])
+const wishInventoryNames = ref<string[]>([])
+const isSavingWish = ref(false)
+const wishSaved = ref(false)
+
+const openWishModal = () => {
+  wishInput.value = ''
+  wishResult.value = null
+  wishError.value = ''
+  wishMissingIngredients.value = []
+  wishSaved.value = false
+  showWishModal.value = true
+}
+
+const closeWishModal = () => {
+  showWishModal.value = false
+}
+
+const generateWish = async () => {
+  if (!wishInput.value.trim()) return
+  isGeneratingWish.value = true
+  wishError.value = ''
+  wishResult.value = null
+  wishMissingIngredients.value = []
+  try {
+    const [result, inventory] = await Promise.all([
+      generateRecipeWish(wishInput.value.trim()),
+      inventoryService.getInventory()
+    ])
+    wishResult.value = result
+    wishInventoryNames.value = inventory.map(i => (i.product_name ?? '').toLowerCase())
+    wishMissingIngredients.value = result.ingredients.filter(
+      ing => !wishInventoryNames.value.some(n => n.includes(ing.name.toLowerCase()) || ing.name.toLowerCase().includes(n))
+    )
+  } catch (e: unknown) {
+    wishError.value = (e as Error).message || 'Fehler beim Generieren.'
+  } finally {
+    isGeneratingWish.value = false
+  }
+}
+
+const saveWishRecipeAndList = async () => {
+  if (!wishResult.value) return
+  isSavingWish.value = true
+  wishError.value = ''
+  try {
+    await recipeService.createRecipe(wishResult.value.title, wishResult.value.instructions, [])
+    for (const ing of wishMissingIngredients.value) {
+      const productId = await shoppingListService.findOrCreateProduct(ing.name, ing.unit, ing.category)
+      await shoppingListService.addItem({ product_id: productId, quantity: ing.quantity })
+    }
+    await loadData()
+    wishSaved.value = true
+  } catch (e: unknown) {
+    wishError.value = (e as Error).message || 'Fehler beim Speichern.'
+  } finally {
+    isSavingWish.value = false
+  }
+}
 
 const getEmoji = (title: string) => {
   const t = title.toLowerCase()
@@ -216,14 +340,23 @@ const saveRecipe = async () => {
   }
 }
 
-const deleteRecipe = async (recipe: Recipe) => {
-  if (!confirm(`"${recipe.title}" wirklich löschen?`)) return
+const pendingDeleteRecipe = ref<Recipe | null>(null)
+const isDeletingRecipe = ref(false)
+
+const deleteRecipe = (recipe: Recipe) => {
+  pendingDeleteRecipe.value = recipe
+}
+
+const confirmDeleteRecipe = async () => {
+  if (!pendingDeleteRecipe.value) return
+  isDeletingRecipe.value = true
   try {
-    await recipeService.deleteRecipe(recipe.recipe_id!)
-    recipes.value = recipes.value.filter(r => r.recipe_id !== recipe.recipe_id)
+    await recipeService.deleteRecipe(pendingDeleteRecipe.value.recipe_id!)
+    recipes.value = recipes.value.filter(r => r.recipe_id !== pendingDeleteRecipe.value!.recipe_id)
     closeDetail()
-  } catch {
-    alert('Fehler beim Löschen.')
+  } finally {
+    isDeletingRecipe.value = false
+    pendingDeleteRecipe.value = null
   }
 }
 
@@ -240,6 +373,7 @@ const addMissingToShoppingList = async (recipe: Recipe) => {
 }
 
 onMounted(loadData)
+onUnmounted(() => navbarControl?.setNavbarRecede(false))
 </script>
 
 <template>
@@ -250,11 +384,176 @@ onMounted(loadData)
         <h1 class="page-title">Rezepte</h1>
         <p class="page-subtitle">Entdecke was du kochen kannst oder erstelle neue Rezepte.</p>
       </div>
-      <UiButton @click="openCreateForm">
-        <Plus :size="20" />
-        Neues Rezept
-      </UiButton>
+      <div class="header-buttons">
+        <UiButton variant="secondary" @click="openWishModal">
+          <ChefHat :size="20" />
+          Rezeptwunsch
+        </UiButton>
+        <UiButton variant="secondary" @click="openAiModal">
+          <Sparkles :size="20" />
+          KI Rezeptvorschläge
+        </UiButton>
+        <UiButton @click="openCreateForm">
+          <Plus :size="20" />
+          Neues Rezept
+        </UiButton>
+      </div>
     </div>
+
+    <!-- Rezeptwunsch Modal -->
+    <transition name="fade-modal">
+      <div v-if="showWishModal" class="ai-modal-overlay" @click.self="closeWishModal">
+        <div class="ai-modal">
+          <div class="ai-modal-header">
+            <div class="ai-modal-title-row">
+              <ChefHat :size="22" class="ai-icon" />
+              <h2 class="ai-modal-title">Rezeptwunsch</h2>
+            </div>
+            <button class="tool-btn close" @click="closeWishModal"><X :size="18" /></button>
+          </div>
+
+          <div class="ai-info-box">
+            <Info :size="16" class="info-icon" />
+            <p>Sag was du kochen möchtest — die KI erstellt ein Rezept und fügt fehlende Zutaten automatisch zur Einkaufsliste hinzu. Was bereits im Inventar ist wird übersprungen.</p>
+          </div>
+
+          <div class="ai-input-row">
+            <UiInput
+              v-model="wishInput"
+              placeholder="z.B. Pasta Carbonara, Gemüsesuppe, Burger…"
+              class="ai-pref-input"
+              @keyup.enter="generateWish"
+            />
+            <UiButton @click="generateWish" :loading="isGeneratingWish" :disabled="isGeneratingWish || !wishInput.trim()">
+              <ChefHat :size="18" />
+              Generieren
+            </UiButton>
+          </div>
+
+          <p v-if="wishError" class="ai-error">{{ wishError }}</p>
+
+          <div v-if="isGeneratingWish" class="ai-loading">
+            <div class="spinner"></div>
+            <p>KI erstellt dein Rezept…</p>
+          </div>
+
+          <template v-if="wishResult && !isGeneratingWish">
+            <UiCard padding="24px" class="wish-result-card">
+              <div class="suggestion-header">
+                <span class="suggestion-emoji">{{ getEmoji(wishResult.title) }}</span>
+                <h3 class="suggestion-title">{{ wishResult.title }}</h3>
+              </div>
+
+              <div class="wish-ingredients-section">
+                <p class="wish-section-label">Zutaten</p>
+                <div class="wish-ingredients-list">
+                  <div
+                    v-for="ing in wishResult.ingredients"
+                    :key="ing.name"
+                    class="wish-ing-row"
+                    :class="{ missing: wishMissingIngredients.some(m => m.name === ing.name) }"
+                  >
+                    <span class="wish-ing-name">{{ ing.name }}</span>
+                    <span class="wish-ing-qty">{{ ing.quantity }} {{ ing.unit }}</span>
+                    <span v-if="wishMissingIngredients.some(m => m.name === ing.name)" class="wish-ing-badge missing-badge">fehlt</span>
+                    <span v-else class="wish-ing-badge have-badge">✓ im Vorrat</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="wish-instructions-section">
+                <p class="wish-section-label">Zubereitung</p>
+                <p class="suggestion-instructions">{{ wishResult.instructions }}</p>
+              </div>
+            </UiCard>
+
+            <div v-if="wishSaved" class="wish-saved-msg">
+              ✓ Rezept gespeichert & {{ wishMissingIngredients.length }} Zutaten zur Einkaufsliste hinzugefügt.
+            </div>
+
+            <UiButton
+              v-else
+              @click="saveWishRecipeAndList"
+              :loading="isSavingWish"
+              :disabled="isSavingWish"
+              class="wish-save-btn"
+            >
+              <ShoppingCart :size="18" />
+              Rezept speichern & {{ wishMissingIngredients.length }} fehlende{{ wishMissingIngredients.length === 1 ? ' Zutat' : ' Zutaten' }} zur Einkaufsliste
+            </UiButton>
+          </template>
+        </div>
+      </div>
+    </transition>
+
+    <!-- AI Suggestions Modal -->
+    <transition name="fade-modal">
+      <div v-if="showAiModal" class="ai-modal-overlay" @click.self="closeAiModal">
+        <div class="ai-modal">
+          <div class="ai-modal-header">
+            <div class="ai-modal-title-row">
+              <Sparkles :size="22" class="ai-icon" />
+              <h2 class="ai-modal-title">KI Rezeptvorschläge</h2>
+            </div>
+            <button class="tool-btn close" @click="closeAiModal"><X :size="18" /></button>
+          </div>
+
+          <div class="ai-info-box">
+            <Info :size="16" class="info-icon" />
+            <p>Die KI analysiert dein aktuelles Inventar und schlägt passende Rezepte mit Zubereitung vor. Optional kannst du Wünsche angeben.</p>
+          </div>
+
+          <div class="ai-input-row">
+            <UiInput
+              v-model="aiPreferences"
+              placeholder="z.B. vegetarisch, schnell, für 2 Personen… (optional)"
+              class="ai-pref-input"
+            />
+            <UiButton @click="generateSuggestions" :loading="isGenerating" :disabled="isGenerating">
+              <Sparkles :size="18" />
+              Generieren
+            </UiButton>
+          </div>
+
+          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
+
+          <div v-if="isGenerating" class="ai-loading">
+            <div class="spinner"></div>
+            <p>KI analysiert dein Inventar…</p>
+          </div>
+
+          <div v-if="aiSuggestions.length > 0" class="ai-suggestions">
+            <UiCard
+              v-for="(s, i) in aiSuggestions"
+              :key="i"
+              class="ai-suggestion-card"
+              padding="24px"
+            >
+              <div class="suggestion-header">
+                <span class="suggestion-emoji">{{ getEmoji(s.title) }}</span>
+                <h3 class="suggestion-title">{{ s.title }}</h3>
+              </div>
+
+              <div class="suggestion-ingredients">
+                <span v-for="ing in s.ingredients" :key="ing" class="ing-chip">{{ ing }}</span>
+              </div>
+
+              <p class="suggestion-instructions">{{ s.instructions }}</p>
+
+              <UiButton
+                class="save-btn"
+                :variant="savedIndices.has(i) ? 'secondary' : 'primary'"
+                :disabled="savedIndices.has(i) || savingIndex === i"
+                :loading="savingIndex === i"
+                @click="saveAiRecipe(s, i)"
+              >
+                {{ savedIndices.has(i) ? '✓ Gespeichert' : 'Rezept speichern' }}
+              </UiButton>
+            </UiCard>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <div class="controls-bar">
       <div class="tabs">
@@ -330,7 +629,7 @@ onMounted(loadData)
     <transition name="slide">
       <div v-if="showDetailPanel" class="panel-overlay" @click.self="closeDetail">
         <div class="panel">
-          <UiCard padding="0" class="panel-card">
+          <UiCard padding="0" class="panel-card" :glass="false" style="background: var(--bg-secondary)">
 
             <div v-if="isLoadingDetail" class="panel-loader">
               <div class="spinner"></div>
@@ -404,7 +703,7 @@ onMounted(loadData)
     <transition name="slide">
       <div v-if="showFormPanel" class="panel-overlay" @click.self="closeForm">
         <div class="panel">
-          <UiCard padding="0" class="panel-card">
+          <UiCard padding="0" class="panel-card" :glass="false" style="background: var(--bg-secondary)">
             <div class="panel-content">
               <div class="panel-title-row">
                 <h2 class="panel-title">
@@ -503,6 +802,14 @@ onMounted(loadData)
         </div>
       </div>
     </transition>
+
+    <UiConfirmDialog
+      v-if="pendingDeleteRecipe"
+      :message="`&quot;${pendingDeleteRecipe.title}&quot; wirklich löschen?`"
+      :is-loading="isDeletingRecipe"
+      @confirm="confirmDeleteRecipe"
+      @cancel="pendingDeleteRecipe = null"
+    />
 
   </div>
 </template>
@@ -717,6 +1024,7 @@ onMounted(loadData)
   border-top: none;
   border-bottom: none;
   border-right: none;
+  background: var(--bg-main);
 }
 
 .panel-loader {
@@ -1059,6 +1367,206 @@ onMounted(loadData)
   grid-template-columns: 1fr 2fr;
   gap: 16px;
   padding-top: 8px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* AI Modal */
+.ai-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ai-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  padding: 32px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ai-icon { color: var(--green); }
+
+.ai-modal-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.ai-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.info-icon { color: var(--green); flex-shrink: 0; margin-top: 2px; }
+
+.ai-info-box p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ai-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.ai-pref-input { flex: 1; }
+
+.ai-error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.ai-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  color: var(--text-muted);
+}
+
+.ai-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-suggestion-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suggestion-emoji { font-size: 1.8rem; }
+
+.suggestion-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.suggestion-ingredients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ing-chip {
+  background: var(--surface-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.suggestion-instructions {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.save-btn { align-self: flex-start; }
+
+.fade-modal-enter-active, .fade-modal-leave-active { transition: opacity 0.2s ease; }
+.fade-modal-enter-from, .fade-modal-leave-to { opacity: 0; }
+
+.wish-result-card { display: flex; flex-direction: column; gap: 16px; }
+
+.wish-section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.wish-ingredients-list { display: flex; flex-direction: column; gap: 6px; }
+
+.wish-ing-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface-bg);
+}
+
+.wish-ing-row.missing { background: rgba(239, 68, 68, 0.06); }
+
+.wish-ing-name { flex: 1; font-weight: 600; font-size: 0.9rem; }
+.wish-ing-qty { color: var(--text-muted); font-size: 0.85rem; }
+
+.wish-ing-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.missing-badge { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+.have-badge { background: rgba(34, 197, 94, 0.12); color: var(--green); }
+
+.wish-instructions-section { margin-top: 4px; }
+
+.wish-save-btn { width: 100%; }
+
+.wish-saved-msg {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--green);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
 }
 </style>
 

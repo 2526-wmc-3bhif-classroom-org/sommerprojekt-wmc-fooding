@@ -210,7 +210,7 @@ const handleLogout = () => {
 
 .navbar.recede {
   transform: translateX(-50%) translateY(-10px) scale(0.98);
-  opacity: 0.5;
+  opacity: 0;
   filter: blur(2px);
   z-index: 10;
   pointer-events: none;

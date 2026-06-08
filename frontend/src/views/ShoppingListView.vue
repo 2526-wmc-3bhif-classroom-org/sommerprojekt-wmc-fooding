@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, inject } from 'vue'
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { shoppingListService, type ShoppingListItem } from '@/services/shoppingLists'
 import { inventoryService } from '@/services/inventory'
@@ -17,8 +17,10 @@ import {
   ShoppingCart,
   CheckCircle2,
   Circle,
-  Calendar
+  Calendar,
+  ScanLine
 } from 'lucide-vue-next'
+import { extractExpiryDate, fileToBase64 } from '@/services/gemini'
 
 const router = useRouter()
 const navbarControl = inject<{ setNavbarRecede: (state: boolean) => void }>('navbarControl')
@@ -37,6 +39,8 @@ const editingItem = ref<ShoppingListItem | null>(null)
 
 const pendingExpiration = ref<Record<number, string | null>>({})
 const confirmingItemId = ref<number | null>(null)
+const isScanning = ref(false)
+const scanError = ref('')
 
 const formData = ref({
   name: '',
@@ -235,7 +239,29 @@ const filteredItems = computed(() => {
   return result
 })
 
+const scanExpiryDate = async (itemId: number, event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  isScanning.value = true
+  scanError.value = ''
+  try {
+    const base64 = await fileToBase64(file)
+    const date = await extractExpiryDate(base64)
+    if (date) {
+      pendingExpiration.value[itemId] = date
+    } else {
+      scanError.value = 'Kein Datum gefunden.'
+    }
+  } catch {
+    scanError.value = 'Scan fehlgeschlagen.'
+  } finally {
+    isScanning.value = false
+    ;(event.target as HTMLInputElement).value = ''
+  }
+}
+
 onMounted(loadData)
+onUnmounted(() => navbarControl?.setNavbarRecede(false))
 </script>
 
 <template>
@@ -322,10 +348,22 @@ onMounted(loadData)
             class="date-input"
             :min="new Date().toISOString().split('T')[0]"
           />
+          <label class="scan-btn" :class="{ scanning: isScanning }" title="Ablaufdatum scannen">
+            <input
+              type="file"
+              accept="image/*"
+              style="display: none"
+              :disabled="isScanning"
+              @change="scanExpiryDate(item.shopping_item_id!, $event)"
+            />
+            <ScanLine v-if="!isScanning" :size="16" />
+            <span v-else class="scan-spinner"></span>
+          </label>
           <button class="no-expiry-btn" @click="setNoExpiration(item)">Kein Ablauf</button>
           <button class="confirm-btn" @click="confirmCheck(item)">✓</button>
           <button class="cancel-btn" @click="cancelCheck(item)">✕</button>
         </div>
+        <p v-if="confirmingItemId === item.shopping_item_id && scanError" class="scan-error">{{ scanError }}</p>
       </UiCard>
     </div>
 
@@ -362,6 +400,7 @@ onMounted(loadData)
         </div>
       </div>
     </transition>
+
   </div>
 </template>
 
@@ -509,6 +548,20 @@ onMounted(loadData)
   color: var(--select-option-color);
   padding: 10px;
 }
+
+.expiration-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.exp-icon { color: var(--text-muted); flex-shrink: 0; }
+.date-input { background: var(--surface-bg); border: 1px solid var(--panel-border); border-radius: 10px; padding: 6px 10px; color: var(--text-main); font-size: 0.85rem; outline: none; }
+.date-input:focus { border-color: var(--green); }
+.scan-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--surface-bg); border: 1px solid var(--panel-border); border-radius: 10px; cursor: pointer; color: var(--text-muted); transition: all 0.2s; flex-shrink: 0; }
+.scan-btn:hover { border-color: var(--green); color: var(--green); }
+.scan-btn.scanning { opacity: 0.6; cursor: not-allowed; }
+.scan-spinner { width: 14px; height: 14px; border: 2px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.no-expiry-btn { background: transparent; border: 1px solid var(--panel-border); border-radius: 10px; padding: 5px 10px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+.no-expiry-btn:hover { border-color: var(--green); color: var(--text-main); }
+.confirm-btn { background: var(--green); border: none; border-radius: 10px; padding: 5px 10px; color: white; font-size: 0.85rem; cursor: pointer; }
+.cancel-btn { background: transparent; border: 1px solid var(--panel-border); border-radius: 10px; padding: 5px 10px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; }
+.scan-error { font-size: 0.8rem; color: #ef4444; margin: 4px 0 0; }
 
 .panel-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 20px; }
 
