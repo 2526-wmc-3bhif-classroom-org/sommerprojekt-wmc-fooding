@@ -96,6 +96,41 @@ export const recipeService = {
     }
   },
 
+  async addIngredient(recipeId: number, productId: number, quantity: number): Promise<void> {
+    const response = await fetch(`${API_URL}/${recipeId}/ingredients`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ productId, quantity })
+    })
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Hinzufügen der Zutat')
+    }
+  },
+
+  async removeIngredient(recipeId: number, productId: number): Promise<void> {
+    const response = await fetch(`${API_URL}/${recipeId}/ingredients/${productId}`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    })
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Entfernen der Zutat')
+    }
+  },
+
+  async updateIngredient(recipeId: number, productId: number, quantity: number): Promise<void> {
+    const response = await fetch(`${API_URL}/${recipeId}/ingredients/${productId}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ quantity })
+    })
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Aktualisieren der Zutat')
+    }
+  },
+
   async addMissingToShoppingList(id: number): Promise<void> {
     const response = await fetch(`${API_URL}/${id}/shopping-list`, {
       method: 'POST',
