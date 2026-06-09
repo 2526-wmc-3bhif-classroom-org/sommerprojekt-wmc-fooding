@@ -67,6 +67,12 @@ export class RecipeRepository {
 
     public delete(unit: Unit, recipeId: number): void {
         unit.prepare(`
+            UPDATE shopping_list_items SET recipe_id = NULL WHERE recipe_id = ?
+        `, [recipeId]).run();
+        unit.prepare(`
+            DELETE FROM recipe_ingredients WHERE recipe_id = ?
+        `, [recipeId]).run();
+        unit.prepare(`
             DELETE FROM recipes WHERE recipe_id = ?
         `, [recipeId]).run();
     }
