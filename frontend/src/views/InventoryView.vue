@@ -17,10 +17,7 @@ import {
   Minus,
   Calendar,
   Package,
-  Grid,
-  List,
   Plus,
-  ArrowRight,
   Camera,
   ScanLine,
   X,
@@ -33,7 +30,6 @@ const { confirm } = useConfirm()
 
 // UI State
 const activeFilter = ref('all')
-const viewMode = ref('grid')
 const searchQuery = ref('')
 const categoryFilter = ref('')
 const sortBy = ref('date')
@@ -126,7 +122,9 @@ const changeQuantity = async (item: InventoryItem, delta: number) => {
   try {
     await inventoryService.updateItem(item.inventory_id!, { quantity: newQty })
     item.quantity = newQty
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Aktualisieren der Menge', 'error')
+  }
 }
 
 const deleteItem = async (item: InventoryItem) => {
@@ -264,10 +262,6 @@ onMounted(loadData)
               <option value="">Kategorie: Alle</option>
               <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
             </select>
-            <div class="toggle-group">
-              <button :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'"><Grid :size="18" /></button>
-              <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'"><List :size="18" /></button>
-            </div>
           </div>
         </div>
 
@@ -282,7 +276,7 @@ onMounted(loadData)
           <UiButton class="mt-4" @click="router.push('/shopping-list')">Jetzt planen</UiButton>
         </div>
 
-        <div v-else :class="['items-container', viewMode]">
+        <div v-else class="items-container grid">
           <UiCard
             v-for="item in filteredItems"
             :key="item.inventory_id"
@@ -474,24 +468,6 @@ onMounted(loadData)
   color: var(--select-option-color);
 }
 
-.toggle-group {
-  display: flex;
-  background: var(--surface-bg);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
-}
-
-.toggle-group button {
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.toggle-group button.active { background: var(--green); color: white; }
 
 .items-container.grid {
   display: grid;
