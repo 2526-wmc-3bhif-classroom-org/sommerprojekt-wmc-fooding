@@ -44,7 +44,7 @@ const allProducts = ref<Product[]>([])
 
 const showDetailPanel = ref(false)
 const showFormPanel = ref(false)
-const editingRecipe = ref<Recipe | null>(null)
+const editingRecipe = ref<RecipeWithIngredients | null>(null)
 
 const formData = ref({
   title: '',
@@ -102,7 +102,12 @@ const generateSuggestions = async () => {
 const saveAiRecipe = async (suggestion: AiRecipeSuggestion, index: number) => {
   savingIndex.value = index
   try {
-    await recipeService.createRecipe(suggestion.title, suggestion.instructions, [])
+    const ingredientIds: { productId: number; quantity: number }[] = []
+    for (const name of suggestion.ingredients) {
+      const productId = await shoppingListService.findOrCreateProduct(name, 'Stk', '')
+      ingredientIds.push({ productId, quantity: 1 })
+    }
+    await recipeService.createRecipe(suggestion.title, suggestion.instructions, ingredientIds)
     savedIndices.value = new Set([...savedIndices.value, index])
     await loadData()
   } catch {
@@ -322,10 +327,25 @@ const saveRecipe = async () => {
   saveError.value = ''
   try {
     if (editingRecipe.value && editingRecipe.value.recipe_id != null) {
-      await recipeService.updateRecipe(editingRecipe.value.recipe_id, {
+      const recipeId = editingRecipe.value.recipe_id
+      await recipeService.updateRecipe(recipeId, {
         title: formData.value.title.trim(),
         instructions: formData.value.instructions.trim()
       })
+      const newIds = new Set(formData.value.ingredients.map(i => i.productId))
+      for (const orig of editingRecipe.value.ingredients) {
+        if (!newIds.has(orig.product_id)) {
+          await recipeService.removeIngredient(recipeId, orig.product_id)
+        }
+      }
+      for (const ing of formData.value.ingredients) {
+        const existing = editingRecipe.value.ingredients.find(i => i.product_id === ing.productId)
+        if (!existing) {
+          await recipeService.addIngredient(recipeId, ing.productId, ing.quantity)
+        } else if (existing.quantity !== ing.quantity) {
+          await recipeService.updateIngredient(recipeId, ing.productId, ing.quantity)
+        }
+      }
     } else {
       await recipeService.createRecipe(
         formData.value.title.trim(),
@@ -727,7 +747,7 @@ onUnmounted(() => navbarControl?.setNavbarRecede(false))
                   ></textarea>
                 </div>
 
-                <div v-if="!editingRecipe" class="form-group">
+                <div class="form-group">
                   <label class="ui-label">Zutaten</label>
 
                   <div v-if="formData.ingredients.length > 0" class="ingredients-added">
@@ -777,10 +797,6 @@ onUnmounted(() => navbarControl?.setNavbarRecede(false))
                     Einheit: {{ selectedProductForDraft.default_unit }}
                   </p>
                 </div>
-
-                <p v-if="editingRecipe" class="edit-note">
-                  Zutaten können aktuell nur beim Erstellen hinzugefügt werden.
-                </p>
 
                 <p v-if="saveError" class="form-error">⚠️ {{ saveError }}</p>
 
@@ -1327,16 +1343,6 @@ onUnmounted(() => navbarControl?.setNavbarRecede(false))
   color: var(--text-muted);
   margin: 0;
   padding-left: 4px;
-}
-
-.edit-note {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin: 0;
-  padding: 12px 16px;
-  background: var(--surface-bg);
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
 }
 
 .form-error {
