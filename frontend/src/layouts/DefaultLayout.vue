@@ -90,50 +90,49 @@ provide('navbarControl', { setNavbarRecede })
 }
 
 .fruit {
-  position: absolute;
+  position: fixed;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.08;
+  opacity: 0.15;
   pointer-events: none;
   z-index: 0;
-  filter: blur(4px);
-  transition: opacity 0.5s ease, filter 0.5s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .fruit-apple {
-  top: 8%;
+  top: 12%;
   left: 2%;
-  width: 320px;
-  height: 320px;
-  transform: rotate(-12deg);
+  width: 260px;
+  height: 260px;
+  transform: rotate(-15deg);
   background-image: url("@/assets/images/apple.png");
 }
 
 .fruit-lemon {
-  top: 45%;
-  left: -6%;
-  width: 350px;
-  height: 350px;
-  transform: rotate(15deg);
+  top: 60%;
+  left: -5%;
+  width: 280px;
+  height: 280px;
+  transform: rotate(20deg);
   background-image: url("@/assets/images/lemon.png");
 }
 
 .fruit-berry {
-  top: 5%;
-  right: 5%;
-  width: 280px;
-  height: 280px;
-  transform: rotate(-8deg);
+  top: 18%;
+  right: 3%;
+  width: 220px;
+  height: 220px;
+  transform: rotate(12deg);
   background-image: url("@/assets/images/strawberry.png");
 }
 
 .fruit-melon {
-  bottom: 5%;
-  right: 6%;
-  width: 380px;
-  height: 380px;
-  transform: rotate(12deg);
+  bottom: 8%;
+  right: 2%;
+  width: 320px;
+  height: 320px;
+  transform: rotate(-10deg);
   background-image: url("@/assets/images/watermelon.png");
 }
 
