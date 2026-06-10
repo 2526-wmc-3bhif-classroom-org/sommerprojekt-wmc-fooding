@@ -90,18 +90,18 @@ provide('navbarControl', { setNavbarRecede })
 }
 
 .fruit {
-  position: fixed;
+  position: absolute;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.15;
+  opacity: 0.12;
   pointer-events: none;
   z-index: 0;
   transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
 .fruit-apple {
-  top: 12%;
+  top: 8%;
   left: 2%;
   width: 260px;
   height: 260px;
@@ -119,7 +119,7 @@ provide('navbarControl', { setNavbarRecede })
 }
 
 .fruit-berry {
-  top: 18%;
+  top: 32%;
   right: 3%;
   width: 220px;
   height: 220px;
@@ -128,7 +128,7 @@ provide('navbarControl', { setNavbarRecede })
 }
 
 .fruit-melon {
-  bottom: 8%;
+  top: 85%;
   right: 2%;
   width: 320px;
   height: 320px;
