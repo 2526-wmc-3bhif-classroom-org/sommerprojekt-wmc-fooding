@@ -106,7 +106,7 @@ provide('navbarControl', { setNavbarRecede })
   width: 260px;
   height: 260px;
   transform: rotate(-15deg);
-  background-image: url("@/assets/images/apple.png");
+  background-image: url("../assets/images/apple.png");
 }
 
 .fruit-lemon {
@@ -115,7 +115,7 @@ provide('navbarControl', { setNavbarRecede })
   width: 280px;
   height: 280px;
   transform: rotate(20deg);
-  background-image: url("@/assets/images/lemon.png");
+  background-image: url("../assets/images/lemon.png");
 }
 
 .fruit-berry {
@@ -124,7 +124,7 @@ provide('navbarControl', { setNavbarRecede })
   width: 220px;
   height: 220px;
   transform: rotate(12deg);
-  background-image: url("@/assets/images/strawberry.png");
+  background-image: url("../assets/images/strawberry.png");
 }
 
 .fruit-melon {
@@ -133,7 +133,7 @@ provide('navbarControl', { setNavbarRecede })
   width: 320px;
   height: 320px;
   transform: rotate(-10deg);
-  background-image: url("@/assets/images/watermelon.png");
+  background-image: url("../assets/images/watermelon.png");
 }
 
 /* Transitions */
