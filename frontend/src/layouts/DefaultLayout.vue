@@ -6,12 +6,6 @@ import { themeStore } from '@/store/theme'
 import { ref, provide, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
-// Import fruit images directly to guarantee they resolve correctly in all environments
-import appleImg from '@/assets/images/apple.png'
-import lemonImg from '@/assets/images/lemon.png'
-import strawberryImg from '@/assets/images/strawberry.png'
-import watermelonImg from '@/assets/images/watermelon.png'
-
 const route = useRoute()
 const isReceded = ref(false)
 
@@ -33,10 +27,10 @@ provide('navbarControl', { setNavbarRecede })
     <!-- Ambients shared across all pages -->
     <div class="ambient ambient-1"></div>
     <div class="ambient ambient-2"></div>
-    <div class="fruit fruit-apple" :style="{ backgroundImage: `url(${appleImg})` }"></div>
-    <div class="fruit fruit-lemon" :style="{ backgroundImage: `url(${lemonImg})` }"></div>
-    <div class="fruit fruit-berry" :style="{ backgroundImage: `url(${strawberryImg})` }"></div>
-    <div class="fruit fruit-melon" :style="{ backgroundImage: `url(${watermelonImg})` }"></div>
+    <div class="fruit fruit-apple"></div>
+    <div class="fruit fruit-lemon"></div>
+    <div class="fruit fruit-berry"></div>
+    <div class="fruit fruit-melon"></div>
 
     <Navbar v-if="showNavbar" :recede="isReceded" />
 
@@ -97,45 +91,50 @@ provide('navbarControl', { setNavbarRecede })
 
 .fruit {
   position: absolute;
+  width: 320px;
+  height: 320px;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  opacity: 0.12;
+  opacity: 0.16;
   pointer-events: none;
   z-index: 0;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: rotate(-5deg);
 }
 
 .fruit-apple {
-  top: 8%;
-  left: 2%;
-  width: 260px;
-  height: 260px;
-  transform: rotate(-15deg);
+  top: 10%;
+  left: 4%;
+  width: 360px;
+  height: 360px;
+  background-image: url("../assets/images/apple.png");
 }
 
 .fruit-lemon {
-  top: 60%;
-  left: -5%;
-  width: 280px;
-  height: 280px;
-  transform: rotate(20deg);
+  top: 50%;
+  left: -10%;
+  width: 420px;
+  height: 240px;
+  transform: rotate(8deg);
+  background-image: url("../assets/images/lemon.png");
 }
 
 .fruit-berry {
-  top: 32%;
-  right: 3%;
-  width: 220px;
-  height: 220px;
-  transform: rotate(12deg);
+  top: 4%;
+  right: 8%;
+  width: 320px;
+  height: 360px;
+  transform: rotate(-10deg);
+  background-image: url("../assets/images/strawberry.png");
 }
 
 .fruit-melon {
-  top: 85%;
-  right: 2%;
-  width: 320px;
-  height: 320px;
-  transform: rotate(-10deg);
+  bottom: 8%;
+  right: 12%;
+  width: 420px;
+  height: 260px;
+  transform: rotate(6deg);
+  background-image: url("../assets/images/watermelon.png");
 }
 
 /* Transitions */
