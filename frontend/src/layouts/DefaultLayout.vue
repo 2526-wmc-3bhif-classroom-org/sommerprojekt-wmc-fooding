@@ -6,6 +6,12 @@ import { themeStore } from '@/store/theme'
 import { ref, provide, computed } from 'vue'
 import { useRoute } from 'vue-router'
 
+// Import fruit images directly to guarantee they resolve correctly in all environments
+import appleImg from '@/assets/images/apple.png'
+import lemonImg from '@/assets/images/lemon.png'
+import strawberryImg from '@/assets/images/strawberry.png'
+import watermelonImg from '@/assets/images/watermelon.png'
+
 const route = useRoute()
 const isReceded = ref(false)
 
@@ -27,10 +33,10 @@ provide('navbarControl', { setNavbarRecede })
     <!-- Ambients shared across all pages -->
     <div class="ambient ambient-1"></div>
     <div class="ambient ambient-2"></div>
-    <div class="fruit fruit-apple"></div>
-    <div class="fruit fruit-lemon"></div>
-    <div class="fruit fruit-berry"></div>
-    <div class="fruit fruit-melon"></div>
+    <div class="fruit fruit-apple" :style="{ backgroundImage: `url(${appleImg})` }"></div>
+    <div class="fruit fruit-lemon" :style="{ backgroundImage: `url(${lemonImg})` }"></div>
+    <div class="fruit fruit-berry" :style="{ backgroundImage: `url(${strawberryImg})` }"></div>
+    <div class="fruit fruit-melon" :style="{ backgroundImage: `url(${watermelonImg})` }"></div>
 
     <Navbar v-if="showNavbar" :recede="isReceded" />
 
@@ -106,7 +112,6 @@ provide('navbarControl', { setNavbarRecede })
   width: 260px;
   height: 260px;
   transform: rotate(-15deg);
-  background-image: url("../assets/images/apple.png");
 }
 
 .fruit-lemon {
@@ -115,7 +120,6 @@ provide('navbarControl', { setNavbarRecede })
   width: 280px;
   height: 280px;
   transform: rotate(20deg);
-  background-image: url("../assets/images/lemon.png");
 }
 
 .fruit-berry {
@@ -124,7 +128,6 @@ provide('navbarControl', { setNavbarRecede })
   width: 220px;
   height: 220px;
   transform: rotate(12deg);
-  background-image: url("../assets/images/strawberry.png");
 }
 
 .fruit-melon {
@@ -133,7 +136,6 @@ provide('navbarControl', { setNavbarRecede })
   width: 320px;
   height: 320px;
   transform: rotate(-10deg);
-  background-image: url("../assets/images/watermelon.png");
 }
 
 /* Transitions */
