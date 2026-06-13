@@ -10,6 +10,7 @@ import { recipeService } from '@/services/recipe'
 import { shoppingListService } from '@/services/shoppingLists'
 
 const PREFS_KEY = 'fooding_diet_prefs'
+const apiUrl = import.meta.env.VITE_API_URL
 
 const PREFERENCE_OPTIONS = [
   { id: 'vegetarisch', label: 'Vegetarisch' },
@@ -132,7 +133,7 @@ onMounted(() => {
           <div class="avatar-section">
             <div class="avatar-wrap">
               <img v-if="previewImage" :src="previewImage" class="avatar-img" alt="Vorschau" />
-              <img v-else-if="userImage" :src="`http://127.0.0.1:3000${userImage}`" class="avatar-img" alt="Profilbild" />
+              <img v-else-if="userImage" :src="`${apiUrl}${userImage}`" class="avatar-img" alt="Profilbild" />
               <div v-else class="avatar-placeholder">
                 <User :size="48" />
               </div>
