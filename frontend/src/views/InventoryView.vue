@@ -110,6 +110,10 @@ const getEmoji = (category?: string) => {
   return map[category || ''] || '📦'
 }
 
+const daysPastExpiry = (date: string): number => {
+  return Math.floor((new Date().getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24))
+}
+
 const getStatus = (date: string) => {
   const diff = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
   if (diff <= 0) return { variant: 'danger' as const, label: 'Abgelaufen' }
