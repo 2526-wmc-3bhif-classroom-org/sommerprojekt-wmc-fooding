@@ -116,7 +116,10 @@ const daysPastExpiry = (date: string): number => {
 
 const getStatus = (date: string) => {
   const diff = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  if (diff <= 0) return { variant: 'danger' as const, label: `${daysPastExpiry(date)} Tage über` }
+  if (diff <= 0) {
+    const past = daysPastExpiry(date)
+    return { variant: 'danger' as const, label: `${past} ${past === 1 ? 'Tag' : 'Tage'} über` }
+  }
   if (diff <= 3) return { variant: 'warning' as const, label: `Ablauf in ${diff}t` }
   return { variant: 'success' as const, label: `Noch ${diff} Tage` }
 }
