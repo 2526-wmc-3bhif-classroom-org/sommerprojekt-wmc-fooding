@@ -1,0 +1,270 @@
+### ============================================================
+### FOODING API TESTS
+### Reihenfolge von oben nach unten ausführen!
+### Token nach Login unten bei @token eintragen.
+### ============================================================
+
+@baseUrl = http://127.0.0.1:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoidGVzdEBmb29kaW5nLmF0IiwiaWQiOjQsInJvbGUiOiJ1c2VyIiwiaW1hZ2UiOm51bGx9LCJpYXQiOjE3ODEzNTgzMDgsImV4cCI6MTc4MTk2MzEwOH0.aI1YiMctd5p3MfBP_QcxPqqmvHKFS-pykI1RjmySdeI
+
+### ============================================================
+### AUTH
+### ============================================================
+
+### [1] Registrieren (nur beim ersten Mal nötig)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@fooding.at",
+  "password": "test1234"
+}
+
+###
+
+### [2] Login → accessToken aus der Antwort kopieren und oben bei @token eintragen
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@fooding.at",
+  "password": "test1234"
+}
+
+###
+
+### [3] Login mit falschem Passwort → sollte 401 zurückgeben
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@fooding.at",
+  "password": "falsch"
+}
+
+###
+
+### ============================================================
+### PRODUKTE
+### ============================================================
+
+### [4] Alle Produkte abrufen
+GET {{baseUrl}}/products
+Authorization: Bearer {{token}}
+
+###
+
+### [5] Produkt erstellen
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Testmilch",
+  "default_unit": "L",
+  "category": "Milchprodukte"
+}
+
+###
+
+### [6] Produkt ohne Name erstellen → sollte 400 zurückgeben
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "default_unit": "L"
+}
+
+###
+
+### [7] Einzelnes Produkt abrufen (ID ggf. anpassen)
+GET {{baseUrl}}/products/1
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================================
+### INVENTAR
+### ============================================================
+
+### [8] Inventar abrufen
+GET {{baseUrl}}/inventory-items
+Authorization: Bearer {{token}}
+
+###
+
+### [9] Inventarartikel hinzufügen (product_id ggf. anpassen)
+POST {{baseUrl}}/inventory-items
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "quantity": 2,
+  "expiration_date": "2026-12-31",
+  "location": "Kühlschrank"
+}
+
+###
+
+### [10] Ablaufdatum updaten – FIX #1: quantity + location werden mitgeschickt (ID ggf. anpassen)
+PUT {{baseUrl}}/inventory-items/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 2,
+  "expiration_date": "2027-06-01",
+  "location": "Kühlschrank"
+}
+
+###
+
+### [11] Menge auf 0 setzen – FIX #3: sollte jetzt 400 zurückgeben statt 200
+PUT {{baseUrl}}/inventory-items/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 0,
+  "expiration_date": "2027-06-01",
+  "location": "Kühlschrank"
+}
+
+###
+
+### [12] Inventarartikel löschen (ID ggf. anpassen)
+DELETE {{baseUrl}}/inventory-items/1
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================================
+### EINKAUFSLISTE
+### ============================================================
+
+### [13] Einkaufsliste abrufen
+GET {{baseUrl}}/shopping-list
+Authorization: Bearer {{token}}
+
+###
+
+### [14] Artikel zur Einkaufsliste hinzufügen (product_id ggf. anpassen)
+POST {{baseUrl}}/shopping-list
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "quantity": 3
+}
+
+###
+
+### [15] Artikel abhaken
+PUT {{baseUrl}}/shopping-list/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "checked": true
+}
+
+###
+
+### [16] Erledigte Artikel löschen
+DELETE {{baseUrl}}/shopping-list/checked
+Authorization: Bearer {{token}}
+
+###
+
+### [17] Erledigte löschen wenn keine vorhanden – FIX #2: gibt jetzt false zurück intern (trotzdem 200)
+DELETE {{baseUrl}}/shopping-list/checked
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================================
+### REZEPTE
+### ============================================================
+
+### [18] Rezept erstellen (product_id ggf. anpassen)
+POST {{baseUrl}}/recipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Testrezept Milch",
+  "instructions": "Milch einschenken und trinken.",
+  "ingredients": [
+    { "productId": 1, "quantity": 1 }
+  ]
+}
+
+###
+
+### [19] Alle Rezepte abrufen
+GET {{baseUrl}}/recipes
+Authorization: Bearer {{token}}
+
+###
+
+### [20] Einzelnes Rezept abrufen (ID ggf. anpassen)
+GET {{baseUrl}}/recipes/1
+Authorization: Bearer {{token}}
+
+###
+
+### [21] Kochbare Rezepte abrufen – FIX #2: nur Rezepte wo genug Menge vorhanden
+GET {{baseUrl}}/recipes/suggestions
+Authorization: Bearer {{token}}
+
+###
+
+### [22] Fehlende Zutaten zur Einkaufsliste – DUPLIKAT-FIX: zweimal aufrufen
+### Erster Aufruf → fügt fehlende Zutat hinzu
+POST {{baseUrl}}/recipes/1/shopping-list
+Authorization: Bearer {{token}}
+
+###
+
+### [23] Zweiter Aufruf → sollte nichts doppelt hinzufügen (Einkaufsliste danach prüfen mit [13])
+POST {{baseUrl}}/recipes/1/shopping-list
+Authorization: Bearer {{token}}
+
+###
+
+### [24] Rezept ohne Titel erstellen → sollte 400 zurückgeben
+POST {{baseUrl}}/recipes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "instructions": "Irgendwas"
+}
+
+###
+
+### [25] Rezept löschen (ID ggf. anpassen)
+DELETE {{baseUrl}}/recipes/1
+Authorization: Bearer {{token}}
+
+###
+
+### ============================================================
+### AUTH – Kein Token
+### ============================================================
+
+### [26] Ohne Token → sollte 401 zurückgeben
+GET {{baseUrl}}/inventory-items
+
+###
+
+### [27] Mit ungültigem Token → sollte 401 zurückgeben
+GET {{baseUrl}}/inventory-items
+Authorization: Bearer ungueltigertoken123
+
+###
