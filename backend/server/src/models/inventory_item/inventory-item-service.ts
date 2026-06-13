@@ -26,7 +26,7 @@ export class InventoryItemService {
     }
 
     public static updateInventoryItem(item: InventoryItem): { success: boolean; message?: string } {
-        if (item.quantity < 0 || !item.expiration_date) {
+        if (item.quantity <= 0 || !item.expiration_date) {
             return { success: false, message: "Invalid update data" };
         }
 
