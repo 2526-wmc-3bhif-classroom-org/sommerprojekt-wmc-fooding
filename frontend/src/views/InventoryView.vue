@@ -179,6 +179,8 @@ const saveEditModal = async () => {
   isSaving.value = true
   try {
     await inventoryService.updateItem(editItem.value.inventory_id!, {
+      quantity: editItem.value.quantity,
+      location: editItem.value.location,
       expiration_date: editDate.value
     })
     const idx = items.value.findIndex(i => i.inventory_id === editItem.value!.inventory_id)
