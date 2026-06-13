@@ -22,7 +22,17 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Nur Bilddateien erlaubt'))
+    } else {
+      cb(null, true)
+    }
+  }
+});
 
 export const inventoryRouter = express.Router();
 

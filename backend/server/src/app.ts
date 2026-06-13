@@ -6,6 +6,7 @@ import { productRouter } from "./models/product/product-routes";
 import { inventoryRouter } from "./models/inventory_item/inventory-item-routes";
 import { recipeRouter } from "./models/recipe/recipe-routes";
 import { shoppingListRouter } from "./models/shopping_list_item/shopping-list-item-routes";
+import { aiRouter } from "./models/ai/ai-routes";
 import * as cors from 'cors';
 import * as path from 'path';
 
@@ -18,9 +19,11 @@ if (process.env.NODE_ENV !== 'test') {
   DB.createDBConnection();
 }
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
+}));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use('/uploads', express.static(uploadsDir));
 
 app.use('/auth', userRouter);
@@ -28,6 +31,7 @@ app.use('/products', productRouter);
 app.use('/inventory-items', inventoryRouter);
 app.use('/recipes', recipeRouter);
 app.use('/shopping-list', shoppingListRouter);
+app.use('/ai', aiRouter);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, '0.0.0.0', () => {
