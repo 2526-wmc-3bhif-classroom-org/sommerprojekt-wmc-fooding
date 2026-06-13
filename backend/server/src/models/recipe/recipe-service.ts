@@ -151,7 +151,7 @@ export class RecipeService {
 
                 for (const ingredient of ingredients) {
                     const available = InventoryItemRepository.getTotalAmount(userId, ingredient.product_id);
-                    if (available <= 0) {
+                    if (available < ingredient.quantity) {
                         canMake = false;
                         break;
                     }
