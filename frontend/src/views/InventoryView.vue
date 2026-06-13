@@ -25,6 +25,7 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const apiUrl = import.meta.env.VITE_API_URL
 const { show: showToast } = useToast()
 const { confirm } = useConfirm()
 
@@ -296,7 +297,7 @@ onMounted(loadData)
             
             <div class="item-body">
               <div v-if="item.image" class="item-image">
-                <img :src="`http://127.0.0.1:3000${item.image}`" alt="Produktbild" />
+                <img :src="`${apiUrl}${item.image}`" alt="Produktbild" />
               </div>
               <h3 class="item-name">{{ item.product_name }}</h3>
               <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.location }}</p>
