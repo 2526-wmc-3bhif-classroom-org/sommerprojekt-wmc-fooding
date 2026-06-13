@@ -169,11 +169,22 @@ const saveWishRecipeAndList = async () => {
   isSavingWish.value = true
   wishError.value = ''
   try {
-    await recipeService.createRecipe(wishResult.value.title, wishResult.value.instructions, [])
-    for (const ing of wishMissingIngredients.value) {
+    const productIdByName: Record<string, number> = {}
+    const recipeIngredients: { productId: number; quantity: number }[] = []
+
+    for (const ing of wishResult.value.ingredients) {
       const productId = await shoppingListService.findOrCreateProduct(ing.name, ing.unit, ing.category)
+      productIdByName[ing.name] = productId
+      recipeIngredients.push({ productId, quantity: ing.quantity })
+    }
+
+    await recipeService.createRecipe(wishResult.value.title, wishResult.value.instructions, recipeIngredients)
+
+    for (const ing of wishMissingIngredients.value) {
+      const productId = productIdByName[ing.name] ?? await shoppingListService.findOrCreateProduct(ing.name, ing.unit, ing.category)
       await shoppingListService.addItem({ product_id: productId, quantity: ing.quantity })
     }
+
     await loadData()
     wishSaved.value = true
   } catch (e: unknown) {
