@@ -53,7 +53,8 @@ const navItems = [
   { id: 'Kühlschrank', label: 'Kühlschrank', icon: Package },
   { id: 'Gefrierfach', label: 'Gefrierfach', icon: Package },
   { id: 'Vorratsschrank', label: 'Vorrat', icon: Package },
-  { id: 'expiring', label: 'Bald ablaufend', icon: Calendar }
+  { id: 'expiring', label: 'Bald ablaufend', icon: Calendar },
+  { id: 'expired', label: 'Abgelaufen', icon: Calendar }
 ]
 
 const categories = ['Obst & Gemüse', 'Milchprodukte', 'Fleisch & Fisch', 'Getränke', 'Konserven', 'Backwaren', 'Snacks', 'Tiefkühl']
@@ -64,7 +65,9 @@ const filteredItems = computed(() => {
     const today = new Date()
     const soon = new Date()
     soon.setDate(today.getDate() + 3)
-    result = result.filter(i => new Date(i.expiration_date) <= soon)
+    result = result.filter(i => new Date(i.expiration_date) > today && new Date(i.expiration_date) <= soon)
+  } else if (activeFilter.value === 'expired') {
+    result = result.filter(i => new Date(i.expiration_date) < new Date())
   } else if (activeFilter.value !== 'all') {
     result = result.filter(i => i.location === activeFilter.value)
   }
