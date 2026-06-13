@@ -1,53 +1,37 @@
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+import { authService } from './auth'
 
-function getDietPrefs(): string {
+const API_URL = `${import.meta.env.VITE_API_URL}/ai`
+
+function authHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${authService.getToken()}`
+  }
+}
+
+function getDietPrefs(): string[] {
   try {
     const stored = localStorage.getItem('fooding_diet_prefs')
-    const prefs: string[] = stored ? JSON.parse(stored) : []
-    return prefs.length > 0 ? `\nErnährungspräferenzen des Users: ${prefs.join(', ')}. Bitte berücksichtigen.` : ''
+    return stored ? JSON.parse(stored) : []
   } catch {
-    return ''
+    return []
   }
 }
 
 export async function extractExpiryDate(imageBase64: string): Promise<string | null> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch(`${API_URL}/extract-expiry`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{
-        role: 'user',
-        content: [
-          {
-            type: 'image_url',
-            image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
-          },
-          {
-            type: 'text',
-            text: 'Find the expiration date or best-before date in this image. Return ONLY the date in YYYY-MM-DD format. If multiple dates exist, return the one that is most likely the expiration date. If no date is found, return the word null.'
-          }
-        ]
-      }],
-      max_tokens: 50
-    })
+    headers: authHeaders(),
+    body: JSON.stringify({ imageBase64 })
   })
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || 'OpenAI API Fehler')
+    const err = await response.json().catch(() => ({})) as any
+    throw new Error(err.message || 'Fehler beim Scannen')
   }
 
   const data = await response.json()
-  const text: string = data.choices?.[0]?.message?.content?.trim() ?? ''
-
-  if (!text || text === 'null') return null
-
-  const match = text.match(/\d{4}-\d{2}-\d{2}/)
-  return match ? match[0] : null
+  return data.date
 }
 
 export interface AiRecipeSuggestion {
@@ -60,35 +44,18 @@ export async function generateRecipeSuggestions(
   inventoryNames: string[],
   preferences: string
 ): Promise<AiRecipeSuggestion[]> {
-  const inventoryList = inventoryNames.join(', ')
-  const prefLine = preferences.trim() ? `\nZusätzliche Wünsche: ${preferences.trim()}` : ''
-  const dietLine = getDietPrefs()
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch(`${API_URL}/recipe-suggestions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{
-        role: 'user',
-        content: `Du bist ein Kochassistent. Der User hat folgende Zutaten im Vorrat: ${inventoryList}.${prefLine}${dietLine}\n\nSchlage 3 Rezepte vor die mit diesen Zutaten (oder einem Teil davon) gekocht werden können. Antworte NUR mit einem JSON-Array ohne Markdown:\n[\n  {\n    "title": "Rezeptname",\n    "ingredients": ["Zutat 1", "Zutat 2"],\n    "instructions": "Schritt-für-Schritt Zubereitung"\n  }\n]`
-      }],
-      max_tokens: 1500
-    })
+    headers: authHeaders(),
+    body: JSON.stringify({ inventoryNames, preferences, dietPrefs: getDietPrefs() })
   })
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || 'OpenAI API Fehler')
+    const err = await response.json().catch(() => ({})) as any
+    throw new Error(err.message || 'OpenAI API Fehler')
   }
 
-  const data = await response.json()
-  const text: string = data.choices?.[0]?.message?.content?.trim() ?? ''
-  const json = text.replace(/```json|```/g, '').trim()
-  return JSON.parse(json) as AiRecipeSuggestion[]
+  return response.json()
 }
 
 export interface RecipeWishResult {
@@ -98,31 +65,18 @@ export interface RecipeWishResult {
 }
 
 export async function generateRecipeWish(wish: string): Promise<RecipeWishResult> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch(`${API_URL}/recipe-wish`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{
-        role: 'user',
-        content: `Der User möchte folgendes kochen: "${wish}"${getDietPrefs()}\n\nErstelle ein konkretes Rezept dazu. Antworte NUR mit JSON ohne Markdown:\n{\n  "title": "Rezeptname",\n  "instructions": "Schritt-für-Schritt Zubereitung",\n  "ingredients": [\n    { "name": "Zutat", "quantity": 200, "unit": "g", "category": "Fleisch & Fisch" }\n  ]\n}\n\nMögliche Kategorien: Obst & Gemüse, Milchprodukte, Fleisch & Fisch, Getränke, Konserven, Backwaren, Snacks, Tiefkühl. Verwende sinnvolle Mengenangaben.`
-      }],
-      max_tokens: 1000
-    })
+    headers: authHeaders(),
+    body: JSON.stringify({ wish, dietPrefs: getDietPrefs() })
   })
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || 'OpenAI API Fehler')
+    const err = await response.json().catch(() => ({})) as any
+    throw new Error(err.message || 'OpenAI API Fehler')
   }
 
-  const data = await response.json()
-  const text: string = data.choices?.[0]?.message?.content?.trim() ?? ''
-  const json = text.replace(/```json|```/g, '').trim()
-  return JSON.parse(json) as RecipeWishResult
+  return response.json()
 }
 
 export function fileToBase64(file: File): Promise<string> {
