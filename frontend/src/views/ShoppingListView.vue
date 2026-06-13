@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, inject, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { shoppingListService, type ShoppingListItem } from '@/services/shoppingLists'
 import { inventoryService } from '@/services/inventory'
@@ -7,32 +7,40 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import { 
-  Search, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  Minus, 
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import {
+  Search,
+  Plus,
+  Trash2,
+  Minus,
   ShoppingCart,
   CheckCircle2,
   Circle,
-  Package,
-  ArrowRight
+  Calendar,
+  ScanLine
 } from 'lucide-vue-next'
+import { extractExpiryDate, fileToBase64 } from '@/services/gemini'
 
 const router = useRouter()
 const navbarControl = inject<{ setNavbarRecede: (state: boolean) => void }>('navbarControl')
+const { show: showToast } = useToast()
+const { confirm } = useConfirm()
 
 // UI State
 const activeFilter = ref<'all' | 'open' | 'done'>('all')
 const searchQuery = ref('')
-const categoryFilter = ref('')
 const isLoading = ref(true)
 const isSaving = ref(false)
 const showAddPanel = ref(false)
 
 const items = ref<ShoppingListItem[]>([])
 const editingItem = ref<ShoppingListItem | null>(null)
+
+const pendingExpiration = ref<Record<number, string | null>>({})
+const confirmingItemId = ref<number | null>(null)
+const isScanning = ref(false)
+const scanError = ref('')
 
 const formData = ref({
   name: '',
@@ -68,28 +76,59 @@ const getEmoji = (category?: string) => {
   return map[category || ''] || '📦'
 }
 
-const toggleCheck = async (item: ShoppingListItem) => {
+const allCount = computed(() => items.value.length)
+const openCount = computed(() => items.value.filter(i => !i.checked).length)
+const doneCount = computed(() => items.value.filter(i => !!i.checked).length)
+
+const startCheck = (item: ShoppingListItem) => {
+  if (item.checked) {
+    toggleCheck(item, null)
+    return
+  }
+  confirmingItemId.value = item.shopping_item_id!
+  pendingExpiration.value[item.shopping_item_id!] = ''
+}
+
+const confirmCheck = async (item: ShoppingListItem) => {
+  const dateVal = pendingExpiration.value[item.shopping_item_id!]
+  await toggleCheck(item, dateVal || null)
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const setNoExpiration = async (item: ShoppingListItem) => {
+  const twoYears = new Date()
+  twoYears.setFullYear(twoYears.getFullYear() + 2)
+  await toggleCheck(item, twoYears.toISOString().split('T')[0] ?? null)
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const cancelCheck = (item: ShoppingListItem) => {
+  confirmingItemId.value = null
+  delete pendingExpiration.value[item.shopping_item_id!]
+}
+
+const toggleCheck = async (item: ShoppingListItem, expirationDate: string | null) => {
   const newChecked = !item.checked
   const oldChecked = item.checked
   item.checked = newChecked ? 1 : 0
-  
+
   try {
     await shoppingListService.setChecked(item.shopping_item_id!, newChecked)
-    
-    // AUTO-TRANSFER TO INVENTORY
+
     if (newChecked) {
-      // Find the item in our list to get product_id
+      const expDate = expirationDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       await inventoryService.addItem({
         product_id: item.product_id!,
         quantity: item.quantity,
         location: 'Kühlschrank',
-        expiration_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!
+        expiration_date: expDate
       })
-      console.log(`Automated transfer: ${item.product_name} added to inventory.`)
     }
   } catch (error) {
     item.checked = oldChecked
-    alert('Fehler beim Aktualisieren.')
+    showToast('Fehler beim Aktualisieren.', 'error')
   }
 }
 
@@ -121,25 +160,78 @@ const saveItem = async () => {
     await loadData()
     closePanel()
   } catch (e) {
-    alert('Fehler beim Speichern')
+    showToast('Fehler beim Speichern', 'error')
   } finally {
     isSaving.value = false
   }
 }
 
 const deleteItem = async (item: ShoppingListItem) => {
-  if (!confirm(`"${item.product_name}" löschen?`)) return
+  const ok = await confirm(`"${item.product_name}" löschen?`)
+  if (!ok) return
   try {
     await shoppingListService.deleteItem(item.shopping_item_id!)
     items.value = items.value.filter(i => i.shopping_item_id !== item.shopping_item_id)
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Löschen', 'error')
+  }
+}
+
+const changeQuantity = async (item: ShoppingListItem, delta: number) => {
+  const newQty = item.quantity + delta
+  if (newQty < 1) {
+    deleteItem(item)
+    return
+  }
+  try {
+    await shoppingListService.updateQuantity(item.shopping_item_id!, newQty)
+    item.quantity = newQty
+  } catch (e) {
+    showToast('Fehler beim Aktualisieren der Menge', 'error')
+  }
+}
+
+const clearDoneItems = async () => {
+  const ok = await confirm('Alle erledigten Artikel löschen?')
+  if (!ok) return
+
+  const deleted = items.value.filter(i => !!i.checked)
+  try {
+    await shoppingListService.deleteCheckedItems()
+    items.value = items.value.filter(i => !i.checked)
+
+    let undone = false
+    const toastId = showToast(
+      `${deleted.length} Artikel gelöscht`,
+      'info',
+      {
+        timeout: 5000,
+        action: {
+          label: 'Rückgängig',
+          handler: async () => {
+            undone = true
+            try {
+              await Promise.all(
+                deleted.map(item => shoppingListService.addItem({ product_id: item.product_id!, quantity: item.quantity }))
+              )
+              await loadData()
+            } catch (e) {
+              showToast('Wiederherstellen fehlgeschlagen', 'error')
+            }
+          }
+        }
+      }
+    )
+  } catch (e) {
+    showToast('Fehler beim Löschen der erledigten Artikel', 'error')
+  }
 }
 
 const filteredItems = computed(() => {
   let result = items.value
   if (activeFilter.value === 'open') result = result.filter(i => !i.checked)
   else if (activeFilter.value === 'done') result = result.filter(i => !!i.checked)
-  
+
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(i => i.product_name?.toLowerCase().includes(q))
@@ -147,7 +239,29 @@ const filteredItems = computed(() => {
   return result
 })
 
+const scanExpiryDate = async (itemId: number, event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  isScanning.value = true
+  scanError.value = ''
+  try {
+    const base64 = await fileToBase64(file)
+    const date = await extractExpiryDate(base64)
+    if (date) {
+      pendingExpiration.value[itemId] = date
+    } else {
+      scanError.value = 'Kein Datum gefunden.'
+    }
+  } catch {
+    scanError.value = 'Scan fehlgeschlagen.'
+  } finally {
+    isScanning.value = false
+    ;(event.target as HTMLInputElement).value = ''
+  }
+}
+
 onMounted(loadData)
+onUnmounted(() => navbarControl?.setNavbarRecede(false))
 </script>
 
 <template>
@@ -165,16 +279,19 @@ onMounted(loadData)
 
     <div class="list-controls">
       <div class="filter-tabs">
-        <button 
-          v-for="f in (['all', 'open', 'done'] as const)" 
+        <button
+          v-for="f in (['all', 'open', 'done'] as const)"
           :key="f"
           class="tab-btn"
           :class="{ active: activeFilter === f }"
           @click="activeFilter = f"
         >
-          {{ f === 'all' ? 'Alle' : f === 'open' ? 'Offen' : 'Erledigt' }}
+          {{ f === 'all' ? `Alle (${allCount})` : f === 'open' ? `Offen (${openCount})` : `Erledigt (${doneCount})` }}
         </button>
       </div>
+      <UiButton v-if="activeFilter === 'done' && items.filter(i => !!i.checked).length > 0" variant="secondary" @click="clearDoneItems">
+        Liste leeren
+      </UiButton>
       <UiInput v-model="searchQuery" placeholder="Suchen..." :icon="Search" class="search-input" />
     </div>
 
@@ -189,33 +306,64 @@ onMounted(loadData)
     </div>
 
     <div v-else class="items-list">
-      <UiCard 
-        v-for="item in filteredItems" 
+      <UiCard
+        v-for="item in filteredItems"
         :key="item.shopping_item_id"
         class="shopping-card"
         :class="{ checked: !!item.checked }"
         :padding="'16px 24px'"
       >
         <div class="card-content">
-          <button class="check-toggle" @click="toggleCheck(item)">
+          <button class="check-toggle" @click="startCheck(item)">
             <CheckCircle2 v-if="item.checked" class="icon-checked" />
             <Circle v-else class="icon-unchecked" />
           </button>
-          
+
           <div class="item-visual">{{ getEmoji(item.category) }}</div>
-          
+
           <div class="item-details">
             <h3 class="item-name">{{ item.product_name }}</h3>
-            <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.category || 'Allgemein' }}</p>
+            <p class="item-meta">{{ item.category || 'Allgemein' }}</p>
           </div>
 
           <div class="actions">
             <UiBadge v-if="item.checked" variant="success">Erledigt & Im Inventar</UiBadge>
+            <div v-if="!item.checked" class="qty-controls">
+              <button class="qty-btn" @click.stop="changeQuantity(item, -1)"><Minus :size="14" /></button>
+              <span class="qty-value">{{ item.quantity }} {{ item.default_unit }}</span>
+              <button class="qty-btn" @click.stop="changeQuantity(item, 1)">+</button>
+            </div>
             <button class="delete-btn" @click="deleteItem(item)">
               <Trash2 :size="18" />
             </button>
           </div>
         </div>
+
+        <!-- Expiration date confirmation row -->
+        <div v-if="confirmingItemId === item.shopping_item_id" class="expiration-row">
+          <Calendar :size="16" class="exp-icon" />
+          <input
+            v-model="pendingExpiration[item.shopping_item_id!]"
+            type="date"
+            class="date-input"
+            :min="new Date().toISOString().split('T')[0]"
+          />
+          <label class="scan-btn" :class="{ scanning: isScanning }" title="Ablaufdatum scannen">
+            <input
+              type="file"
+              accept="image/*"
+              style="display: none"
+              :disabled="isScanning"
+              @change="scanExpiryDate(item.shopping_item_id!, $event)"
+            />
+            <ScanLine v-if="!isScanning" :size="16" />
+            <span v-else class="scan-spinner"></span>
+          </label>
+          <button class="no-expiry-btn" @click="setNoExpiration(item)">Kein Ablauf</button>
+          <button class="confirm-btn" @click="confirmCheck(item)">✓</button>
+          <button class="cancel-btn" @click="cancelCheck(item)">✕</button>
+        </div>
+        <p v-if="confirmingItemId === item.shopping_item_id && scanError" class="scan-error">{{ scanError }}</p>
       </UiCard>
     </div>
 
@@ -252,6 +400,7 @@ onMounted(loadData)
         </div>
       </div>
     </transition>
+
   </div>
 </template>
 
@@ -282,7 +431,7 @@ onMounted(loadData)
 
 .filter-tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 16px;
   border: 1px solid var(--panel-border);
@@ -336,6 +485,24 @@ onMounted(loadData)
 .delete-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; }
 .delete-btn:hover { color: #ef4444; }
 
+.qty-controls { display: flex; align-items: center; gap: 6px; }
+.qty-btn {
+  background: var(--surface-hover);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.qty-btn:hover { background: var(--surface-active); }
+.qty-value { font-size: 0.85rem; font-weight: 600; min-width: 52px; text-align: center; color: var(--text-muted); }
+
 .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); z-index: 2000; display: flex; justify-content: flex-end; }
 .panel { width: 100%; max-width: 500px; height: 100%; }
 .panel-card { height: 100%; border-radius: 0; border-left: 1px solid var(--panel-border); }
@@ -348,7 +515,7 @@ onMounted(loadData)
 .flex-1 { flex: 1; }
 
 .modern-select {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--select-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 14px;
@@ -360,34 +527,48 @@ onMounted(loadData)
   font-weight: 500;
   transition: all 0.2s;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   background-size: 18px;
 }
 
 .modern-select:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--surface-hover);
   border-color: var(--green);
 }
 
 .modern-select:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
 }
 
 .modern-select option {
-  background-color: #1a1a1a;
-  color: white;
+  background-color: var(--select-option-bg);
+  color: var(--select-option-color);
   padding: 10px;
 }
+
+.expiration-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.exp-icon { color: var(--text-muted); flex-shrink: 0; }
+.date-input { background: var(--surface-bg); border: 1px solid var(--panel-border); border-radius: 10px; padding: 6px 10px; color: var(--text-main); font-size: 0.85rem; outline: none; }
+.date-input:focus { border-color: var(--green); }
+.scan-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--surface-bg); border: 1px solid var(--panel-border); border-radius: 10px; cursor: pointer; color: var(--text-muted); transition: all 0.2s; flex-shrink: 0; }
+.scan-btn:hover { border-color: var(--green); color: var(--green); }
+.scan-btn.scanning { opacity: 0.6; cursor: not-allowed; }
+.scan-spinner { width: 14px; height: 14px; border: 2px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.no-expiry-btn { background: transparent; border: 1px solid var(--panel-border); border-radius: 10px; padding: 5px 10px; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+.no-expiry-btn:hover { border-color: var(--green); color: var(--text-main); }
+.confirm-btn { background: var(--green); border: none; border-radius: 10px; padding: 5px 10px; color: white; font-size: 0.85rem; cursor: pointer; }
+.cancel-btn { background: transparent; border: 1px solid var(--panel-border); border-radius: 10px; padding: 5px 10px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; }
+.scan-error { font-size: 0.8rem; color: #ef4444; margin: 4px 0 0; }
 
 .panel-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-top: 20px; }
 
 .ui-label { font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 8px; display: block; }
 
 .loader { display: flex; justify-content: center; padding: 100px; }
-.spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }

@@ -28,7 +28,7 @@ export interface DeleteProductResponse {
   message: string
 }
 
-const API_URL = 'http://127.0.0.1:3000'
+const API_URL = import.meta.env.VITE_API_URL
 
 class ProductService {
   private getHeaders(): HeadersInit {
@@ -47,6 +47,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to create product')
     }
@@ -61,6 +62,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to fetch products')
     }
@@ -76,6 +78,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to fetch product')
     }
@@ -92,6 +95,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to update product')
     }
@@ -106,6 +110,7 @@ class ProductService {
     })
 
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const error = await response.json()
       throw new Error(error.message || 'Failed to delete product')
     }

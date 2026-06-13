@@ -38,7 +38,7 @@ defineEmits(['update:modelValue'])
 .ui-input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -57,7 +57,7 @@ defineEmits(['update:modelValue'])
 
 .ui-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 12px 16px;
@@ -68,9 +68,9 @@ defineEmits(['update:modelValue'])
 }
 
 .ui-input:focus {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-hover);
   border-color: var(--blue);
-  box-shadow: 0 0 0 4px rgba(77, 163, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
 }
 
 .has-icon .ui-input {

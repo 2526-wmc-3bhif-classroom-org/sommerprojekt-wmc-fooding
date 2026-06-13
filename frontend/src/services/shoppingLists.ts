@@ -13,7 +13,7 @@ export interface ShoppingListItem {
   category?: string
 }
 
-const API_URL = 'http://127.0.0.1:3000/shopping-list'
+const API_URL = `${import.meta.env.VITE_API_URL}/shopping-list`
 
 function authHeaders(): HeadersInit {
   return {
@@ -27,7 +27,10 @@ export const shoppingListService = {
     const response = await fetch(API_URL, {
       headers: authHeaders()
     })
-    if (!response.ok) throw new Error('Fehler beim Laden der Einkaufsliste')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Laden der Einkaufsliste')
+    }
     const data = await response.json()
     return data.items
   },
@@ -39,6 +42,7 @@ export const shoppingListService = {
       body: JSON.stringify(item)
     })
     if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
       const err = await response.json().catch(() => ({}))
       throw new Error(err.message || 'Fehler beim Hinzufügen')
     }
@@ -51,7 +55,10 @@ export const shoppingListService = {
       headers: authHeaders(),
       body: JSON.stringify({ quantity })
     })
-    if (!response.ok) throw new Error('Fehler beim Aktualisieren der Menge')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Aktualisieren der Menge')
+    }
   },
 
   async setChecked(id: number, checked: boolean): Promise<void> {
@@ -60,7 +67,10 @@ export const shoppingListService = {
       headers: authHeaders(),
       body: JSON.stringify({ checked })
     })
-    if (!response.ok) throw new Error('Fehler beim Abhaken')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Abhaken')
+    }
   },
 
   async deleteItem(id: number): Promise<void> {
@@ -68,7 +78,21 @@ export const shoppingListService = {
       method: 'DELETE',
       headers: authHeaders()
     })
-    if (!response.ok) throw new Error('Fehler beim Löschen')
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Löschen')
+    }
+  },
+
+  async deleteCheckedItems(): Promise<void> {
+    const response = await fetch(`${API_URL}/checked`, {
+      method: 'DELETE',
+      headers: authHeaders()
+    })
+    if (!response.ok) {
+      if (response.status === 401) authService.handleUnauthorized()
+      throw new Error('Fehler beim Löschen der erledigten Artikel')
+    }
   },
 
   // Mithilfe von KI

@@ -59,6 +59,17 @@ shoppingListRouter.put("/:id", (req: AuthRequest, res) => {
     }
 });
 
+shoppingListRouter.delete("/checked", (req: AuthRequest, res) => {
+    const userId = req.user!.id;
+
+    const result = ShoppingListItemService.deleteCheckedItems(userId);
+    if (result.success) {
+        res.status(StatusCodes.OK).json({ message: "Erledigte Artikel gelöscht" });
+    } else {
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ message: result.message });
+    }
+});
+
 shoppingListRouter.delete("/:id", (req: AuthRequest, res) => {
     const userId = req.user!.id;
     const shopping_item_id = parseInt(req.params.id as string);

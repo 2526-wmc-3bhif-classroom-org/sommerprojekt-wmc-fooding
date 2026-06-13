@@ -23,7 +23,7 @@ export interface User {
   image?: string
 }
 
-const API_URL = 'http://127.0.0.1:3000'
+const API_URL = import.meta.env.VITE_API_URL
 
 class AuthService {
   private _token: Ref<string | null> = ref(null)
@@ -125,6 +125,12 @@ class AuthService {
 
   getToken(): string | null {
     return this._token.value
+  }
+
+  handleUnauthorized(): never {
+    this.logout()
+    window.location.href = '/login'
+    throw new Error('Session abgelaufen. Bitte erneut anmelden.')
   }
 }
 

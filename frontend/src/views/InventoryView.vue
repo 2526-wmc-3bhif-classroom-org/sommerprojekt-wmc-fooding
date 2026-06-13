@@ -3,33 +3,46 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { inventoryService, type InventoryItem } from '@/services/inventory'
 import { productService, type Product } from '@/services/product'
+import { extractExpiryDate, fileToBase64 } from '@/services/gemini'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiBadge from '@/components/ui/UiBadge.vue'
 import UiInput from '@/components/ui/UiInput.vue'
-import { 
-  Search, 
-  Trash2, 
-  Edit2, 
-  Minus, 
-  Calendar, 
-  Package, 
-  Grid, 
-  List,
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import {
+  Search,
+  Trash2,
+  Edit2,
+  Minus,
+  Calendar,
+  Package,
   Plus,
-  ArrowRight,
-  Camera
+  Camera,
+  ScanLine,
+  X,
+  ShoppingCart
 } from 'lucide-vue-next'
 
 const router = useRouter()
+const apiUrl = import.meta.env.VITE_API_URL
+const { show: showToast } = useToast()
+const { confirm } = useConfirm()
 
 // UI State
 const activeFilter = ref('all')
-const viewMode = ref('grid')
 const searchQuery = ref('')
 const categoryFilter = ref('')
 const sortBy = ref('date')
 const isLoading = ref(true)
+
+// Edit Modal State
+const showEditModal = ref(false)
+const editItem = ref<InventoryItem | null>(null)
+const editDate = ref('')
+const isSaving = ref(false)
+const isScanning = ref(false)
+const scanError = ref('')
 
 // Data State
 const items = ref<InventoryItem[]>([])
@@ -40,7 +53,8 @@ const navItems = [
   { id: 'Kühlschrank', label: 'Kühlschrank', icon: Package },
   { id: 'Gefrierfach', label: 'Gefrierfach', icon: Package },
   { id: 'Vorratsschrank', label: 'Vorrat', icon: Package },
-  { id: 'expiring', label: 'Bald ablaufend', icon: Calendar }
+  { id: 'expiring', label: 'Bald ablaufend', icon: Calendar },
+  { id: 'expired', label: 'Abgelaufen', icon: Calendar }
 ]
 
 const categories = ['Obst & Gemüse', 'Milchprodukte', 'Fleisch & Fisch', 'Getränke', 'Konserven', 'Backwaren', 'Snacks', 'Tiefkühl']
@@ -51,7 +65,9 @@ const filteredItems = computed(() => {
     const today = new Date()
     const soon = new Date()
     soon.setDate(today.getDate() + 3)
-    result = result.filter(i => new Date(i.expiration_date) <= soon)
+    result = result.filter(i => new Date(i.expiration_date) > today && new Date(i.expiration_date) <= soon)
+  } else if (activeFilter.value === 'expired') {
+    result = result.filter(i => new Date(i.expiration_date) < new Date())
   } else if (activeFilter.value !== 'all') {
     result = result.filter(i => i.location === activeFilter.value)
   }
@@ -61,6 +77,9 @@ const filteredItems = computed(() => {
   }
   if (categoryFilter.value) result = result.filter(i => i.category === categoryFilter.value)
   result.sort((a, b) => {
+    if (activeFilter.value === 'expired') {
+      return new Date(a.expiration_date || 0).getTime() - new Date(b.expiration_date || 0).getTime()
+    }
     if (sortBy.value === 'name') return (a.product_name || '').localeCompare(b.product_name || '')
     return new Date(a.expiration_date || 0).getTime() - new Date(b.expiration_date || 0).getTime()
   })
@@ -97,9 +116,17 @@ const getEmoji = (category?: string) => {
   return map[category || ''] || '📦'
 }
 
+const daysPastExpiry = (date: string): number => {
+  return Math.floor((new Date().getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24))
+}
+
 const getStatus = (date: string) => {
   const diff = Math.ceil((new Date(date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-  if (diff <= 0) return { variant: 'danger' as const, label: 'Abgelaufen' }
+  if (diff <= 0) {
+    const past = daysPastExpiry(date)
+    if (past === 0) return { variant: 'danger' as const, label: 'Heute abgelaufen' }
+    return { variant: 'danger' as const, label: `${past} ${past === 1 ? 'Tag' : 'Tage'} über` }
+  }
   if (diff <= 3) return { variant: 'warning' as const, label: `Ablauf in ${diff}t` }
   return { variant: 'success' as const, label: `Noch ${diff} Tage` }
 }
@@ -110,15 +137,20 @@ const changeQuantity = async (item: InventoryItem, delta: number) => {
   try {
     await inventoryService.updateItem(item.inventory_id!, { quantity: newQty })
     item.quantity = newQty
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Aktualisieren der Menge', 'error')
+  }
 }
 
 const deleteItem = async (item: InventoryItem) => {
-  if (!confirm(`"${item.product_name}" löschen?`)) return
+  const ok = await confirm(`"${item.product_name}" löschen?`)
+  if (!ok) return
   try {
     await inventoryService.deleteItem(item.inventory_id!)
     items.value = items.value.filter(i => i.inventory_id !== item.inventory_id)
-  } catch (e) {}
+  } catch (e) {
+    showToast('Fehler beim Löschen', 'error')
+  }
 }
 
 const uploadImage = async (item: InventoryItem, file: File) => {
@@ -126,7 +158,7 @@ const uploadImage = async (item: InventoryItem, file: File) => {
     const imageUrl = await inventoryService.uploadImage(item.inventory_id!, file)
     item.image = imageUrl
   } catch (e) {
-    alert('Fehler beim Hochladen des Bildes')
+    showToast('Fehler beim Hochladen des Bildes', 'error')
   }
 }
 
@@ -140,6 +172,61 @@ const handleFileUpload = (item: InventoryItem, event: Event) => {
   const file = target.files?.[0]
   if (file) {
     uploadImage(item, file)
+  }
+}
+
+const openEditModal = (item: InventoryItem) => {
+  editItem.value = { ...item }
+  editDate.value = item.expiration_date ? item.expiration_date.substring(0, 10) : ''
+  scanError.value = ''
+  showEditModal.value = true
+}
+
+const closeEditModal = () => {
+  showEditModal.value = false
+  editItem.value = null
+  editDate.value = ''
+  scanError.value = ''
+}
+
+const saveEditModal = async () => {
+  if (!editItem.value) return
+  isSaving.value = true
+  try {
+    await inventoryService.updateItem(editItem.value.inventory_id!, {
+      quantity: editItem.value.quantity,
+      location: editItem.value.location,
+      expiration_date: editDate.value
+    })
+    const idx = items.value.findIndex(i => i.inventory_id === editItem.value!.inventory_id)
+    const found = items.value[idx]
+    if (idx !== -1 && found) found.expiration_date = editDate.value
+    closeEditModal()
+  } catch (e: any) {
+    scanError.value = e.message || 'Fehler beim Speichern'
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const scanExpiryDate = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  isScanning.value = true
+  scanError.value = ''
+  try {
+    const base64 = await fileToBase64(file)
+    const date = await extractExpiryDate(base64)
+    if (date) {
+      editDate.value = date
+    } else {
+      scanError.value = 'Kein Datum gefunden. Bitte manuell eingeben.'
+    }
+  } catch (e: any) {
+    scanError.value = e.message || 'Scan fehlgeschlagen'
+  } finally {
+    isScanning.value = false
+    ;(event.target as HTMLInputElement).value = ''
   }
 }
 
@@ -192,10 +279,6 @@ onMounted(loadData)
               <option value="">Kategorie: Alle</option>
               <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
             </select>
-            <div class="toggle-group">
-              <button :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'"><Grid :size="18" /></button>
-              <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'"><List :size="18" /></button>
-            </div>
           </div>
         </div>
 
@@ -210,12 +293,13 @@ onMounted(loadData)
           <UiButton class="mt-4" @click="router.push('/shopping-list')">Jetzt planen</UiButton>
         </div>
 
-        <div v-else :class="['items-container', viewMode]">
-          <UiCard 
-            v-for="item in filteredItems" 
+        <div v-else class="items-container grid">
+          <UiCard
+            v-for="item in filteredItems"
             :key="item.inventory_id"
             hoverable
             class="item-card"
+            :class="`expiry-${getStatus(item.expiration_date).variant === 'success' ? 'ok' : getStatus(item.expiration_date).variant === 'warning' ? 'soon' : 'danger'}`"
             :padding="'20px'"
           >
             <div class="item-header">
@@ -227,7 +311,7 @@ onMounted(loadData)
             
             <div class="item-body">
               <div v-if="item.image" class="item-image">
-                <img :src="`http://127.0.0.1:3000${item.image}`" alt="Produktbild" />
+                <img :src="`${apiUrl}${item.image}`" alt="Produktbild" />
               </div>
               <h3 class="item-name">{{ item.product_name }}</h3>
               <p class="item-meta">{{ item.quantity }} {{ item.default_unit }} • {{ item.location }}</p>
@@ -240,14 +324,17 @@ onMounted(loadData)
                 <button @click="changeQuantity(item, 1)"><Plus :size="16" /></button>
               </div>
               <div class="tool-actions">
+                <button class="edit-btn" @click="openEditModal(item)" title="Ablaufdatum bearbeiten">
+                  <Edit2 :size="16" />
+                </button>
                 <button class="upload-btn" @click="triggerFileInput(item.inventory_id!)">
                   <Camera :size="16" />
                 </button>
-                <input 
+                <input
                   :id="`fileInput-${item.inventory_id}`"
-                  type="file" 
-                  accept="image/*" 
-                  style="display: none" 
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
                   @change="(e) => handleFileUpload(item, e)"
                 />
                 <button class="delete-btn" @click="deleteItem(item)">
@@ -259,6 +346,54 @@ onMounted(loadData)
         </div>
       </main>
     </div>
+
+    <!-- Edit Expiry Date Modal -->
+    <Teleport to="body">
+      <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal">
+          <div class="modal-header">
+            <h2>Ablaufdatum bearbeiten</h2>
+            <button class="modal-close" @click="closeEditModal"><X :size="20" /></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="modal-product-name">{{ editItem?.product_name }}</p>
+
+            <label class="modal-label">Ablaufdatum</label>
+            <div class="date-row">
+              <input
+                v-model="editDate"
+                type="date"
+                class="date-input"
+              />
+              <label class="scan-btn" title="Foto aufnehmen">
+                <input
+                  type="file"
+                  accept="image/*"
+                  style="display: none"
+                  @change="scanExpiryDate"
+                />
+                <ScanLine v-if="!isScanning" :size="18" />
+                <span v-else class="scan-spinner"></span>
+                {{ isScanning ? 'Scannt...' : 'Scannen' }}
+              </label>
+            </div>
+
+            <p v-if="scanError" class="scan-error">{{ scanError }}</p>
+            <p v-if="editDate && !isScanning && !scanError" class="scan-success">
+              Datum: {{ editDate }}
+            </p>
+          </div>
+
+          <div class="modal-footer">
+            <UiButton variant="secondary" @click="closeEditModal">Abbrechen</UiButton>
+            <UiButton :disabled="!editDate || isSaving" @click="saveEditModal">
+              {{ isSaving ? 'Speichert...' : 'Speichern' }}
+            </UiButton>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -306,7 +441,7 @@ onMounted(loadData)
   text-align: left;
 }
 
-.nav-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-main); }
+.nav-btn:hover { background: var(--surface-hover); color: var(--text-main); }
 .nav-btn.active { background: var(--green); color: white; }
 
 .toolbar {
@@ -329,7 +464,7 @@ onMounted(loadData)
 }
 
 .modern-select {
-  background: #1e1e2e;
+  background: var(--select-bg);
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   padding: 10px 16px;
@@ -346,28 +481,10 @@ onMounted(loadData)
 }
 
 .modern-select option {
-  background: #1e1e2e;
-  color: #e2e8f0;
+  background: var(--select-option-bg);
+  color: var(--select-option-color);
 }
 
-.toggle-group {
-  display: flex;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--panel-border);
-}
-
-.toggle-group button {
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.toggle-group button.active { background: var(--green); color: white; }
 
 .items-container.grid {
   display: grid;
@@ -375,10 +492,13 @@ onMounted(loadData)
   gap: 24px;
 }
 
-.item-card { display: flex; flex-direction: column; gap: 20px; }
+.item-card { display: flex; flex-direction: column; gap: 20px; border-left: 3px solid transparent; }
+.item-card.expiry-ok { border-left-color: #10b981; }
+.item-card.expiry-soon { border-left-color: #f59e0b; }
+.item-card.expiry-danger { border-left-color: #ef4444; }
 
 .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
-.item-visual { font-size: 2.5rem; background: rgba(255, 255, 255, 0.05); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.item-visual { font-size: 2.5rem; background: var(--surface-hover); width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
 
 .item-name { font-size: 1.25rem; font-weight: 700; margin: 0; }
 .item-meta { color: var(--text-muted); font-size: 0.9rem; margin: 4px 0 0; }
@@ -396,20 +516,20 @@ onMounted(loadData)
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-bg);
   padding: 6px;
   border-radius: 10px;
 }
 
 .qty-actions button { background: transparent; border: none; color: var(--text-main); cursor: pointer; padding: 4px; border-radius: 6px; }
-.qty-actions button:hover { background: rgba(255, 255, 255, 0.1); }
+.qty-actions button:hover { background: var(--surface-active); }
 
 .tool-actions { display: flex; gap: 8px; }
 .tool-actions button { background: transparent; border: 1px solid var(--panel-border); color: var(--text-muted); padding: 8px; border-radius: 10px; cursor: pointer; }
 .tool-actions .delete-btn:hover { border-color: #ef4444; color: #ef4444; }
 
 .loader { display: flex; justify-content: center; padding: 100px; }
-.spinner { width: 40px; height: 40px; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--panel-border); border-top-color: var(--green); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state { text-align: center; padding: 100px 20px; color: var(--text-muted); }
@@ -439,5 +559,135 @@ onMounted(loadData)
 
 .upload-btn:hover {
   background: var(--blue-dark);
+}
+
+.edit-btn {
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-btn:hover { border-color: var(--green); color: var(--green); }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--panel-bg, #1a1a2e);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 { font-size: 1.3rem; font-weight: 700; margin: 0; }
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.modal-close:hover { color: var(--text-main); }
+
+.modal-product-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 16px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.date-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.date-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text-main);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.date-input:focus { border-color: var(--green); }
+
+.scan-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.scan-btn:hover { opacity: 0.85; }
+
+.scan-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.scan-error { color: #ef4444; font-size: 0.9rem; margin: 0; }
+.scan-success { color: var(--green); font-size: 0.9rem; margin: 0; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--panel-border);
 }
 </style>

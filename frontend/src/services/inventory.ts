@@ -12,7 +12,7 @@ export interface InventoryItem {
     category?: string;
 }
 
-const API_URL = 'http://127.0.0.1:3000/inventory-items';
+const API_URL = `${import.meta.env.VITE_API_URL}/inventory-items`;
 
 export const inventoryService = {
     async getInventory(): Promise<InventoryItem[]> {
@@ -23,6 +23,7 @@ export const inventoryService = {
         });
 
         if (!response.ok) {
+            if (response.status === 401) authService.handleUnauthorized()
             throw new Error('Fehler beim Laden des Inventars');
         }
 
@@ -41,6 +42,7 @@ export const inventoryService = {
         });
 
         if (!response.ok) {
+            if (response.status === 401) authService.handleUnauthorized()
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || 'Fehler beim Hinzufügen');
         }
@@ -57,6 +59,7 @@ export const inventoryService = {
         });
 
         if (!response.ok) {
+            if (response.status === 401) authService.handleUnauthorized()
             throw new Error('Fehler beim Update');
         }
     },
@@ -70,6 +73,7 @@ export const inventoryService = {
         });
 
         if (!response.ok) {
+            if (response.status === 401) authService.handleUnauthorized()
             throw new Error('Fehler beim Löschen');
         }
     },
@@ -87,6 +91,7 @@ export const inventoryService = {
         });
 
         if (!response.ok) {
+            if (response.status === 401) authService.handleUnauthorized()
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.message || 'Fehler beim Hochladen des Bildes');
         }
