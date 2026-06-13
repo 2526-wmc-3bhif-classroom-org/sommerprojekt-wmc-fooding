@@ -77,6 +77,9 @@ const filteredItems = computed(() => {
   }
   if (categoryFilter.value) result = result.filter(i => i.category === categoryFilter.value)
   result.sort((a, b) => {
+    if (activeFilter.value === 'expired') {
+      return new Date(a.expiration_date || 0).getTime() - new Date(b.expiration_date || 0).getTime()
+    }
     if (sortBy.value === 'name') return (a.product_name || '').localeCompare(b.product_name || '')
     return new Date(a.expiration_date || 0).getTime() - new Date(b.expiration_date || 0).getTime()
   })
