@@ -76,7 +76,7 @@ export class UserService {
         }
     }
 
-    public static getUserById(email: string): User | undefined {
+    public static getUserByEmail(email: string): User | undefined {
         return UserRepository.findByEmail(email);
     }
 }
