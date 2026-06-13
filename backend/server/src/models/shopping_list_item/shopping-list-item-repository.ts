@@ -67,6 +67,6 @@ export class ShoppingListItemRepository {
             DELETE FROM shopping_list_items
             WHERE user_id = ? AND checked = 1
         `).run(userId);
-        return result.changes >= 0;
+        return result.changes > 0;
     }
 }

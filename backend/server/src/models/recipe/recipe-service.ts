@@ -116,8 +116,12 @@ export class RecipeService {
         const unit = new Unit(false);
         try {
             const neededIngredients = this.recipeRepo.getIngredientsForRecipe(unit, recipeId);
+            const existingItems = ShoppingListItemRepository.findAllByUserId(userId);
+            const alreadyOnList = new Set(existingItems.map(s => s.product_id));
 
             for (const item of neededIngredients) {
+                if (alreadyOnList.has(item.product_id)) continue;
+
                 const amountInFridge = InventoryItemRepository.getTotalAmount(userId, item.product_id);
 
                 if (amountInFridge < item.quantity) {
@@ -127,7 +131,6 @@ export class RecipeService {
                         product_id: item.product_id,
                         recipe_id: recipeId,
                         quantity: missingAmount
-
                     });
                 }
             }
