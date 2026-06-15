@@ -370,7 +370,7 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
-.pref-chip:hover { border-color: var(--green); color: var(--text-main); }
+.pref-chip:hover { border-color: var(--green); color: var(--text-main); transform: scale(1.02); transition: all 0.2s ease; }
 
 .pref-chip.active {
   background: rgba(34, 197, 94, 0.12);
