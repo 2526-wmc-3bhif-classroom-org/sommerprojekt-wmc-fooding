@@ -303,7 +303,7 @@ onMounted(() => {
 .user-role { color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0; text-transform: capitalize; font-style: italic; }
 
 /* Stats */
-.section-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 20px; }
+.section-title { font-size: 1.25rem; font-weight: 800; margin: 0 0 20px; letter-spacing: 0.5px; }
 .section-subtitle { color: var(--text-muted); font-size: 0.9rem; margin: -12px 0 20px; line-height: 1.5; }
 
 .stats-loader { display: flex; justify-content: center; padding: 24px; }
