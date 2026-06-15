@@ -299,7 +299,7 @@ onMounted(() => {
 .preview-actions { display: flex; gap: 8px; }
 
 .user-info { text-align: center; }
-.user-email { font-weight: 700; font-size: 1rem; margin: 0; }
+.user-email { font-weight: 700; font-size: 1.05rem; margin: 0; letter-spacing: 0.2px; }
 .user-role { color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0; text-transform: capitalize; }
 
 /* Stats */
