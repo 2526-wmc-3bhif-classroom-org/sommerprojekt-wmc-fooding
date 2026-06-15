@@ -22,6 +22,8 @@ import { authService } from '@/services/auth'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 
+const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000'
+
 interface Props {
   recede?: boolean
 }
@@ -114,7 +116,7 @@ const handleLogout = () => {
         <template v-else>
           <div class="profile-section">
             <div class="user-avatar" @click="toggleProfile">
-              <img v-if="user?.image" :src="`http://127.0.0.1:3000${user.image}`" alt="Profilbild" class="avatar-image" />
+              <img v-if="user?.image" :src="`${apiUrl}${user.image}`" alt="Profilbild" class="avatar-image" />
               <div v-else class="avatar-placeholder">
                 {{ user?.email.charAt(0).toUpperCase() || 'U' }}
               </div>
