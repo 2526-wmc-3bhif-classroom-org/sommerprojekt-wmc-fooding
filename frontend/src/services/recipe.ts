@@ -18,7 +18,7 @@ export interface RecipeWithIngredients extends Recipe {
   ingredients: RecipeIngredient[]
 }
 
-const API_URL = `${import.meta.env.VITE_API_URL}/recipes`
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000'}/recipes`
 
 function authHeaders(): HeadersInit {
   return {
