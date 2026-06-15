@@ -8,9 +8,11 @@ import { authService } from '@/services/auth'
 import { inventoryService } from '@/services/inventory'
 import { recipeService } from '@/services/recipe'
 import { shoppingListService } from '@/services/shoppingLists'
+import { useToast } from '@/composables/useToast'
 
 const PREFS_KEY = 'fooding_diet_prefs'
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000'
+const { show: showToast } = useToast()
 
 const PREFERENCE_OPTIONS = [
   { id: 'vegetarisch', label: 'Vegetarisch' },
@@ -104,6 +106,10 @@ const saveImage = async () => {
     authService.updateUserImage(imageUrl)
     selectedFile.value = null
     previewImage.value = ''
+    showToast('Profilbild erfolgreich aktualisiert', 'success')
+  } catch (error: any) {
+    console.error('Error saving profile image:', error)
+    showToast(error.message || 'Fehler beim Hochladen des Profilbildes', 'error')
   } finally {
     isUploadingImage.value = false
   }
