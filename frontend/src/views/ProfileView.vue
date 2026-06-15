@@ -324,7 +324,11 @@ onMounted(() => {
   background: var(--surface-bg);
   border-radius: 16px;
   border: 1px solid var(--panel-border);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
 }
 
 .stat-item.stat-warn { border-color: rgba(251, 146, 60, 0.4); }
