@@ -25,7 +25,7 @@ import {
 } from 'lucide-vue-next'
 
 const router = useRouter()
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000'
 const { show: showToast } = useToast()
 const { confirm } = useConfirm()
 
