@@ -284,7 +284,7 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease-in; }
 
 .avatar-placeholder {
   width: 100%;
