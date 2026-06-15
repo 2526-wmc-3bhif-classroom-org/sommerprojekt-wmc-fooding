@@ -300,7 +300,7 @@ onMounted(() => {
 
 .user-info { text-align: center; }
 .user-email { font-weight: 700; font-size: 1.05rem; margin: 0; letter-spacing: 0.2px; }
-.user-role { color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0; text-transform: capitalize; }
+.user-role { color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0; text-transform: capitalize; font-style: italic; }
 
 /* Stats */
 .section-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 20px; }
