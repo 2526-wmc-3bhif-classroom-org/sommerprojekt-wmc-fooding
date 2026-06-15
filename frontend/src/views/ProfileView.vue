@@ -281,6 +281,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .avatar-img { width: 100%; height: 100%; object-fit: cover; }
